@@ -47,7 +47,7 @@ export const copy = {
     preparingVerification: "Preparing…",
     redirectingVerification: "Redirecting…",
     linkedWalletHint:
-      "This wallet is linked to another identity. Connect your verified root wallet to sign in.",
+      "This wallet is linked to another identity. Connect your verified wallet to continue.",
   },
   onboarding: {
     title: "Set up GoClaim",
