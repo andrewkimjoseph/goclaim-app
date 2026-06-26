@@ -34,6 +34,14 @@ type AgentStatus = {
     txHash: string | null;
     errorMsg: string | null;
     claimedAt: string;
+    transfer?: {
+      recipientAddress: string;
+      amountWei: string;
+      amountGd: string;
+      txHash: string;
+      userOpHash: string;
+      transferredAt: string;
+    } | null;
   }>;
 };
 

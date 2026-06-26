@@ -10,6 +10,9 @@ type ClaimLog = {
   txHash: string | null;
   errorMsg: string | null;
   claimedAt: string;
+  transfer?: {
+    amountGd: string;
+  } | null;
 };
 
 type ClaimHistoryTableProps = {
@@ -47,6 +50,7 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
           <tr className="text-left text-foreground/60 border-b border-foreground/20">
             <th className="pb-2 pr-4">{copy.claimHistory.date}</th>
             <th className="pb-2 pr-4">{copy.claimHistory.status}</th>
+            <th className="pb-2 pr-4">{copy.claimHistory.amount}</th>
             <th className="pb-2">{copy.claimHistory.receipt}</th>
           </tr>
         </thead>
@@ -70,6 +74,9 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
                   <span className={statusClass(log.status)} title={display.detail}>
                     {display.label}
                   </span>
+                </td>
+                <td className="py-2 pr-4 whitespace-nowrap">
+                  {log.transfer?.amountGd ? `${log.transfer.amountGd} G$` : "—"}
                 </td>
                 <td className="py-2">
                   {log.txHash ? (

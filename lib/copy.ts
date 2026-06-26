@@ -126,6 +126,7 @@ export const copy = {
       `No claims yet. After you link your bot, the first claim runs ${claimSchedule}.`,
     date: "Date",
     status: "Status",
+    amount: "Amount sent",
     receipt: "Receipt",
     viewOnCeloscan: "View on Celoscan",
   },
