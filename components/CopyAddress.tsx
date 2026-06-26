@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { truncateAddress } from "@/lib/formatAddress";
 
 type CopyAddressProps = {
   address: string;
@@ -21,12 +20,12 @@ export function CopyAddress({ address, label, hint, nested }: CopyAddressProps) 
   }
 
   const row = (
-    <div className="flex items-center justify-between gap-2 min-w-0">
+    <div className="flex items-center gap-3 min-w-0">
       <code
-        className="text-xs font-mono text-foreground/90 truncate min-w-0 flex-1 leading-none"
+        className="flex-1 min-w-0 text-xs font-mono text-foreground/90 leading-none whitespace-nowrap overflow-hidden"
         title={address}
       >
-        {truncateAddress(address)}
+        {address}
       </code>
       <button
         onClick={copy}
@@ -49,7 +48,7 @@ export function CopyAddress({ address, label, hint, nested }: CopyAddressProps) 
   return (
     <div className="card">
       {label && (
-        <p className="text-xs font-display font-semibold text-foreground/60 mb-1">
+        <p className="text-xs font-display font-semibold text-foreground/60 mb-3">
           {label}
         </p>
       )}
