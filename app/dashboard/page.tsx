@@ -159,7 +159,7 @@ function DashboardContent() {
         </Link>
         <button
           onClick={handleLogout}
-          className="text-white/80 text-sm font-display font-semibold hover:text-white"
+          className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
         >
           {copy.dashboard.signOut}
         </button>
