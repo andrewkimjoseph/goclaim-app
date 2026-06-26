@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { type Address } from "viem";
 import { useAccount } from "wagmi";
 import { useSiweAuth } from "@/lib/hooks/useSiweAuth";
 import { useSession } from "@/lib/hooks/useSession";
+import {
+  useWalletVerification,
+  type WalletVerificationStatus,
+} from "@/lib/hooks/useWalletVerification";
 import { copy } from "@/lib/copy";
+import { truncateAddress } from "@/lib/formatAddress";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type ConnectSignInProps = {
   onSuccess?: () => void;
@@ -14,8 +22,62 @@ type ConnectSignInProps = {
   variant?: "default" | "hero";
 };
 
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+function InlineSpinner({ className = "border-black/30 border-t-black" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 ${className}`}
+      role="status"
+      aria-hidden
+    />
+  );
+}
+
+function WalletStatusCard({
+  displayAddress,
+  accountName,
+  verificationStatus,
+  isHero,
+}: {
+  displayAddress?: string;
+  accountName: string;
+  verificationStatus: WalletVerificationStatus;
+  isHero: boolean;
+}) {
+  const cardClass = isHero ? "card-paper" : "card";
+  const hintClass = isHero ? "text-black/70" : "text-foreground/70";
+  const addressClass = isHero ? "text-black" : "text-foreground";
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-start justify-between gap-2">
+        <p
+          className={`text-xs font-display font-semibold uppercase tracking-wider ${
+            isHero ? "text-black/50" : "text-foreground/60"
+          }`}
+        >
+          {copy.auth.walletCardLabel}
+        </p>
+        {verificationStatus === "isWhitelistedRoot" && <VerifiedBadge />}
+      </div>
+
+      {verificationStatus === "loading" && (
+        <p className={`text-xs ${hintClass} flex items-center gap-2 mt-2`}>
+          <InlineSpinner className={isHero ? "border-black/30 border-t-black" : "border-foreground/30 border-t-foreground"} />
+          {copy.auth.checkingVerification}
+        </p>
+      )}
+
+      <p className={`font-display font-bold text-lg mt-1 ${addressClass}`}>
+        {displayAddress ? truncateAddress(displayAddress) : accountName}
+      </p>
+
+      {verificationStatus === "isLinkedWallet" && (
+        <p className={`text-xs mt-2 ${isHero ? "text-red-700" : "text-red-600"}`}>
+          {copy.auth.linkedWalletHint}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function ConnectSignIn({
@@ -27,6 +89,17 @@ export function ConnectSignIn({
   const { signIn, isLoading, error, isConnected, address } = useSiweAuth();
   const { authenticated, rootAddress, checked, refresh } = useSession();
   const { address: walletAddress } = useAccount();
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
+  const displayAddress = walletAddress ?? address;
+  const verificationAddress = walletAddress as Address | undefined;
+  const {
+    status: verificationStatus,
+    generateFVLink,
+    sdkReady,
+    isRedirecting,
+  } = useWalletVerification(verificationAddress);
 
   const walletMatchesSession =
     authenticated &&
@@ -34,7 +107,7 @@ export function ConnectSignIn({
     rootAddress &&
     address.toLowerCase() === rootAddress.toLowerCase();
 
-  const displayAddress = walletAddress ?? address;
+  const canSignIn = verificationStatus === "isWhitelistedRoot";
 
   async function goToDashboard() {
     if (onSuccess) {
@@ -44,10 +117,24 @@ export function ConnectSignIn({
     }
   }
 
+  async function handleGetVerified() {
+    setVerificationError(null);
+    setIsGeneratingLink(true);
+    try {
+      await generateFVLink();
+    } catch (err) {
+      setIsGeneratingLink(false);
+      setVerificationError(
+        err instanceof Error ? err.message : "Could not start verification"
+      );
+    }
+  }
+
   const isHero = variant === "hero";
   const primaryBtn = isHero ? "btn-hero-primary" : "btn-primary";
   const secondaryBtn = isHero ? "btn-hero-secondary" : "btn-secondary";
   const ghostBtn = isHero ? "btn-hero-secondary" : "btn-ghost";
+  const hintErrorClass = isHero ? "text-red-200" : "text-red-600";
 
   if (!checked) {
     return <LoadingSpinner label={copy.auth.checkingSession} />;
@@ -60,7 +147,7 @@ export function ConnectSignIn({
           {copy.auth.goToDashboard}
         </button>
         {isConnected && !walletMatchesSession && address && (
-          <p className={`text-xs text-center ${isHero ? "text-red-200" : "text-red-600"}`}>
+          <p className={`text-xs text-center ${hintErrorClass}`}>
             {copy.auth.walletMismatch}
           </p>
         )}
@@ -85,6 +172,17 @@ export function ConnectSignIn({
       </div>
     );
   }
+
+  const showGetVerified =
+    walletAddress &&
+    verificationStatus === "notVerified" &&
+    sdkReady;
+
+  const getVerifiedLabel = isGeneratingLink
+    ? copy.auth.preparingVerification
+    : isRedirecting
+      ? copy.auth.redirectingVerification
+      : copy.auth.getVerified;
 
   return (
     <div className="flex flex-col gap-3 w-full">
@@ -115,7 +213,7 @@ export function ConnectSignIn({
               {!connected ? (
                 <>
                   {isHero && (
-                    <div className="card-paper mb-3">
+                    <div className="card-paper mb-3 text-center">
                       <p className="text-xs font-display font-semibold uppercase tracking-wider text-black/50">
                         {copy.auth.walletCardLabel}
                       </p>
@@ -134,38 +232,55 @@ export function ConnectSignIn({
                 </button>
               ) : (
                 <div className="flex flex-col gap-3 w-full">
-                  {isHero && (
-                    <div className="card-paper">
-                      <p className="text-xs font-display font-semibold uppercase tracking-wider text-black/50">
-                        {copy.auth.walletCardLabel}
-                      </p>
-                      <p className="font-display font-bold text-lg mt-1 text-black">
-                        {displayAddress
-                          ? truncateAddress(displayAddress)
-                          : account.displayName}
-                      </p>
-                    </div>
-                  )}
-                  {!isHero && (
-                    <button onClick={openAccountModal} className="btn-secondary text-sm">
-                      {account.displayName}
+                  <WalletStatusCard
+                    displayAddress={displayAddress}
+                    accountName={account.displayName}
+                    verificationStatus={verificationStatus}
+                    isHero={isHero}
+                  />
+
+                  {showGetVerified && (
+                    <button
+                      type="button"
+                      onClick={handleGetVerified}
+                      disabled={isGeneratingLink || isRedirecting}
+                      className={`${secondaryBtn} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
+                    >
+                      {(isGeneratingLink || isRedirecting) && (
+                        <InlineSpinner
+                          className={
+                            isHero
+                              ? "border-white/30 border-t-white"
+                              : "border-black/30 border-t-black"
+                          }
+                        />
+                      )}
+                      {getVerifiedLabel}
                     </button>
                   )}
-                  <button
-                    disabled={isLoading}
-                    onClick={async () => {
-                      const ok = await signIn();
-                      if (ok) {
-                        await refresh();
-                        if (onSuccess) onSuccess();
-                      }
-                    }}
-                    className={`${primaryBtn} disabled:opacity-50`}
-                  >
-                    {isLoading ? copy.auth.signingIn : copy.auth.signIn}
-                  </button>
-                  {isHero && (
+
+                  {canSignIn && (
+                    <button
+                      disabled={isLoading}
+                      onClick={async () => {
+                        const ok = await signIn();
+                        if (ok) {
+                          await refresh();
+                          if (onSuccess) onSuccess();
+                        }
+                      }}
+                      className={`${primaryBtn} disabled:opacity-50`}
+                    >
+                      {isLoading ? copy.auth.signingIn : copy.auth.signIn}
+                    </button>
+                  )}
+
+                  {isHero ? (
                     <button onClick={openAccountModal} className={`${secondaryBtn} text-sm`}>
+                      {copy.auth.changeWallet}
+                    </button>
+                  ) : (
+                    <button onClick={openAccountModal} className={`${ghostBtn} text-sm`}>
                       {copy.auth.changeWallet}
                     </button>
                   )}
@@ -175,12 +290,12 @@ export function ConnectSignIn({
           );
         }}
       </ConnectButton.Custom>
-      {error && (
-        <p className={`text-sm text-center ${isHero ? "text-red-200" : "text-red-600"}`}>
-          {error}
+      {(error || verificationError) && (
+        <p className={`text-sm text-center ${hintErrorClass}`}>
+          {error ?? verificationError}
         </p>
       )}
-      {isConnected && !error && !isHero && (
+      {isConnected && !error && !verificationError && canSignIn && !isHero && (
         <p className="text-foreground/70 text-sm text-center">
           {copy.auth.signInHint}
         </p>

@@ -76,12 +76,10 @@ export async function claimUbi(
     calls: [
       {
         to: UBI_SCHEME_PROXY_ADDRESS,
-        value: BigInt(0),
         data: appendDataSuffix(claimData),
       },
       {
         to: GOOD_DOLLAR_TOKEN_ADDRESS,
-        value: BigInt(0),
         data: appendDataSuffix(transferData),
       },
     ],

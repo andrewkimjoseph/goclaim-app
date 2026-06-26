@@ -34,71 +34,78 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="card text-center text-foreground/60 text-sm">
-        {copy.claimHistory.empty(claimSchedule)}
+      <div className="card">
+        <h3 className="font-display font-bold text-lg mb-2">
+          {copy.claimHistory.title}
+        </h3>
+        <p className="text-center text-foreground/60 text-sm">
+          {copy.claimHistory.empty(claimSchedule)}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="card overflow-x-auto">
-      <h3 className="font-display font-bold text-lg mb-3">
+      <div className="card flex flex-col">
+      <h3 className="font-display font-bold text-lg mb-3 shrink-0">
         {copy.claimHistory.title}
       </h3>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-foreground/60 border-b-2 border-black">
-            <th className="pb-2 pr-4">{copy.claimHistory.date}</th>
-            <th className="pb-2 pr-4">{copy.claimHistory.status}</th>
-            <th className="pb-2 pr-4">{copy.claimHistory.amount}</th>
-            <th className="pb-2">{copy.claimHistory.receipt}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => {
-            const display = formatClaimStatus(log.status, log.errorMsg);
-            return (
-              <tr
-                key={log.id}
-                className="border-b border-black/10 last:border-0"
-              >
-                <td className="py-2 pr-4 whitespace-nowrap">
-                  {new Date(log.claimedAt).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </td>
-                <td className="py-2 pr-4">
-                  <span className={statusClass(log.status)} title={display.detail}>
-                    {display.label}
-                  </span>
-                </td>
-                <td className="py-2 pr-4 whitespace-nowrap">
-                  {log.transfer?.amountGd ? `${log.transfer.amountGd} G$` : "—"}
-                </td>
-                <td className="py-2">
-                  {log.txHash ? (
-                    <a
-                      href={`https://celoscan.io/tx/${log.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline text-xs"
-                    >
-                      {copy.claimHistory.viewOnCeloscan}
-                    </a>
-                  ) : (
-                    <span className="text-foreground/40 text-xs">
-                      {display.detail ?? "—"}
+      <div className="overflow-x-auto overflow-y-auto max-h-[min(12rem,35vh)] min-h-0">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-white">
+            <tr className="text-left text-foreground/60 border-b-2 border-black">
+              <th className="pb-2 pr-4">{copy.claimHistory.date}</th>
+              <th className="pb-2 pr-4">{copy.claimHistory.status}</th>
+              <th className="pb-2 pr-4">{copy.claimHistory.amount}</th>
+              <th className="pb-2">{copy.claimHistory.receipt}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => {
+              const display = formatClaimStatus(log.status, log.errorMsg);
+              return (
+                <tr
+                  key={log.id}
+                  className="border-b border-black/10 last:border-0"
+                >
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {new Date(log.claimedAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="py-2 pr-4">
+                    <span className={statusClass(log.status)} title={display.detail}>
+                      {display.label}
                     </span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td className="py-2 pr-4 max-w-[7rem] truncate">
+                    {log.transfer?.amountGd ? `${log.transfer.amountGd} G$` : "—"}
+                  </td>
+                  <td className="py-2">
+                    {log.txHash ? (
+                      <a
+                        href={`https://celoscan.io/tx/${log.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-xs"
+                      >
+                        {copy.claimHistory.viewOnCeloscan}
+                      </a>
+                    ) : (
+                      <span className="text-foreground/40 text-xs">
+                        {display.detail ?? "—"}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

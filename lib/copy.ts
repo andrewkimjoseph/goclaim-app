@@ -26,7 +26,7 @@ export const copy = {
   },
   auth: {
     connectWallet: "Connect GoodDollar wallet",
-    walletCardLabel: "Your GoodDollar wallet",
+    walletCardLabel: "Your GoodDollar-Verified wallet",
     walletCardHint: "Connect to begin",
     changeWallet: "Change wallet",
     signIn: "Sign in",
@@ -41,6 +41,13 @@ export const copy = {
     walletMismatch:
       "Connected wallet differs from your signed-in wallet. Switch accounts or sign in again.",
     openingDashboard: "Opening dashboard...",
+    checkingVerification: "Checking verification…",
+    verifiedBadge: "Verified",
+    getVerified: "Get verified",
+    preparingVerification: "Preparing…",
+    redirectingVerification: "Redirecting…",
+    linkedWalletHint:
+      "This wallet is linked to another identity. Connect your verified root wallet to sign in.",
   },
   onboarding: {
     title: "Set up GoClaim",
@@ -106,7 +113,7 @@ export const copy = {
   agentStatus: {
     cardTitle: "GoClaim status",
     active: {
-      label: "Claiming daily",
+      label: "Active",
       description: "G$ is claimed every day and sent to your wallet.",
     },
     pending: {

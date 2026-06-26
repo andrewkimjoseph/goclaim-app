@@ -13,10 +13,7 @@ import { SetupChecklist } from "@/components/SetupChecklist";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { type Address } from "viem";
 import { copy, formatClaimSchedule } from "@/lib/copy";
-
-function truncateAddress(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
+import { truncateAddress } from "@/lib/formatAddress";
 
 type AgentStatus = {
   hasAgent: boolean;
@@ -243,7 +240,7 @@ function DashboardContent() {
             <p className="text-xs text-foreground/60 mt-2 mb-2">
               {copy.dashboard.botHint}
             </p>
-            <CopyAddress address={simpleSmartAccount} />
+            <CopyAddress address={simpleSmartAccount} nested />
           </details>
         )}
 
