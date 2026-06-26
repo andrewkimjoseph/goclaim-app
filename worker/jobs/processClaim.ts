@@ -1,3 +1,4 @@
+import { type Prisma } from "@prisma/client";
 import { type Address, type Hex } from "viem";
 import { decryptPrivateKey } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
@@ -94,20 +95,32 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
       return;
     }
 
-    await prisma.$transaction([
-      prisma.claimLog.create({
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const claimLog = await tx.claimLog.create({
         data: {
           userId,
           status: "success",
           txHash: result.transactionHash,
           waveIndex,
         },
-      }),
-      prisma.agentWallet.update({
+      });
+
+      await tx.transferLog.create({
+        data: {
+          userId,
+          claimLogId: claimLog.id,
+          recipientAddress: agent.user.rootAddress.toLowerCase(),
+          amountWei: result.entitlement,
+          txHash: result.transactionHash,
+          userOpHash: result.userOpHash,
+        },
+      });
+
+      await tx.agentWallet.update({
         where: { userId },
         data: { lastClaimedAt: new Date() },
-      }),
-    ]);
+      });
+    });
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Unknown claim error";
