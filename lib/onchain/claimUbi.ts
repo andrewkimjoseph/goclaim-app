@@ -82,7 +82,7 @@ export async function claimUbi(
       {
         to: GOOD_DOLLAR_TOKEN_ADDRESS,
         value: BigInt(0),
-        data: transferData,
+        data: appendDataSuffix(transferData),
       },
     ],
   });
