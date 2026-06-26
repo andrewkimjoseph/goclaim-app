@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ConnectSignIn } from "@/components/ConnectSignIn";
@@ -40,8 +41,15 @@ export default function LandingPage() {
   return (
     <div className="app-shell pb-4 min-h-screen">
       <header className="header-bar">
-        <BrandLogo size="nav" priority />
-        <span className="section-label-inverse">{copy.landing.tagline}</span>
+        <Link href="/">
+          <BrandLogo size="nav" priority />
+        </Link>
+        <Link
+          href="/faqs"
+          className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
+        >
+          {copy.faqs.headerButton}
+        </Link>
       </header>
 
       <main className="flex-1 flex flex-col min-h-0">
