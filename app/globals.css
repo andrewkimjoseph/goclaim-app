@@ -85,3 +85,10 @@
     @apply step-badge bg-white text-black/50;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-modalFadeIn,
+  .animate-modalSlideUp {
+    animation: none;
+  }
+}
