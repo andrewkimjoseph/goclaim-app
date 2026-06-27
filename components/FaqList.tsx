@@ -18,7 +18,7 @@ export function FaqList() {
               <span className="hidden group-open:block -mt-0.5">−</span>
             </span>
           </summary>
-          <p className="text-sm text-foreground/80 mt-3 pt-3 border-t-2 border-black/10 leading-relaxed">
+          <p className="text-sm text-foreground/80 mt-3 pt-3 border-t-2 border-black leading-relaxed">
             {item.answer}
           </p>
         </details>
