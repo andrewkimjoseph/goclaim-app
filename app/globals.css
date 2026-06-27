@@ -78,7 +78,7 @@
   }
 
   .step-badge-done {
-    @apply step-badge bg-primary text-white;
+    @apply step-badge bg-accent text-black;
   }
 
   .step-badge-todo {
