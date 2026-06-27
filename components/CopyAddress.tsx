@@ -29,7 +29,7 @@ export function CopyAddress({ address, label, hint, nested }: CopyAddressProps) 
       </code>
       <button
         onClick={copy}
-        className="shrink-0 text-xs font-display font-semibold text-primary hover:brightness-110 border-2 border-black px-2 py-1 rounded-brutal shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        className="shrink-0 text-xs font-display font-semibold text-foreground hover:brightness-110 border-2 border-black px-2 py-1 rounded-brutal shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
       >
         {copied ? "Copied!" : "Copy"}
       </button>
