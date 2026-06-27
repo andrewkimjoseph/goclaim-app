@@ -1,6 +1,6 @@
 # GoClaim Deployment Checklist
 
-> **Node 20 required.** Next.js 16 needs Node `>=20.9.0`. This is pinned to the Node 20 major via `engines` (`"node": "20.x"`) in `package.json` and `.nvmrc` (`20`) — a fixed major avoids Vercel auto-upgrading to a new major Node release. On Railway, also set `NIXPACKS_NODE_VERSION=20` on each service so the build image does not fall back to Node 18.
+> **Node 24 required.** Next.js 16 needs Node `>=20.9.0`, and Vercel deprecates Node 20 for deployments created on/after 2026-10-01. This is pinned to the Node 24 major via `engines` (`"node": "24.x"`) in `package.json` and `.nvmrc` (`24`) — a fixed major avoids Vercel auto-upgrading to a new major Node release. On Railway, also set `NIXPACKS_NODE_VERSION=24` on each service so the build image uses the same version.
 
 ## 1. Neon Postgres
 
@@ -84,7 +84,7 @@ Railway Worker -> Celo.
 sh -c 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET"'
 ```
 
-   - **No-curl fallback** (uses Node 20's global `fetch`):
+   - **No-curl fallback** (uses Node's global `fetch`):
 
 ```bash
 node -e "fetch(process.env.NEXT_PUBLIC_APP_URL+'/api/internal/trigger-claims',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(async r=>{console.log(r.status, await r.text()); process.exit(r.ok?0:1)}).catch(e=>{console.error(e); process.exit(1)})"
@@ -93,11 +93,11 @@ node -e "fetch(process.env.NEXT_PUBLIC_APP_URL+'/api/internal/trigger-claims',{m
 3. Env vars on the cron service:
    - `NEXT_PUBLIC_APP_URL` (e.g. `https://app.goclaim.xyz`)
    - `CRON_SECRET` (must match the value set on Vercel)
-   - `NIXPACKS_NODE_VERSION=20`
+   - `NIXPACKS_NODE_VERSION=24`
 
 ### If the cron "didn't run", check
 
-- **Build image failed on Node 18** — Next 16 needs Node 20.9+ (see top of this file).
+- **Build image failed on an old Node** — Next 16 needs Node 20.9+; this repo pins Node 24 (see top of this file).
 - **No cron service existed** — `railway.toml` only defines the worker; the cron is a second service.
 - **Restart Policy not `Never`** — Railway won't schedule a service it considers always-on.
 - **`NEXT_PUBLIC_APP_URL` / `CRON_SECRET` missing or mismatched** with Vercel.
