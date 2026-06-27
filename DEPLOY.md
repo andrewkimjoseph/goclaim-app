@@ -1,6 +1,6 @@
 # GoClaim Deployment Checklist
 
-> **Node 20.9+ required.** Next.js 16 needs Node `>=20.9.0`. This is pinned via `engines` in `package.json` and `.nvmrc` (`20`). On Railway, also set `NIXPACKS_NODE_VERSION=20` on each service so the build image does not fall back to Node 18.
+> **Node 20 required.** Next.js 16 needs Node `>=20.9.0`. This is pinned to the Node 20 major via `engines` (`"node": "20.x"`) in `package.json` and `.nvmrc` (`20`) — a fixed major avoids Vercel auto-upgrading to a new major Node release. On Railway, also set `NIXPACKS_NODE_VERSION=20` on each service so the build image does not fall back to Node 18.
 
 ## 1. Neon Postgres
 
