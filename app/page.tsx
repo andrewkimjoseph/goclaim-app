@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ConnectSignIn } from "@/components/ConnectSignIn";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSession } from "@/lib/hooks/useSession";
 import { copy } from "@/lib/copy";
 
@@ -33,7 +34,7 @@ export default function LandingPage() {
   if (checked && authenticated) {
     return (
       <div className="app-shell items-center justify-center">
-        <p className="text-white/80 font-display">{copy.auth.openingDashboard}</p>
+        <LoadingSpinner label={copy.auth.openingDashboard} />
       </div>
     );
   }

@@ -234,7 +234,11 @@ export default function DashboardPage() {
           />
         )}
 
-        <ClaimHistoryTable logs={status.claimLogs ?? []} />
+        <ClaimHistoryTable
+          logs={status.claimLogs ?? []}
+          limit={3}
+          viewAllHref="/history"
+        />
       </main>
 
       {showOnboardingModal && simpleSmartAccount && (

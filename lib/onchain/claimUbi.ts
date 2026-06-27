@@ -104,14 +104,22 @@ export async function claimUbi(
   };
 }
 
-export function formatEntitlementGd(entitlementWei: string): string {
-  return formatUnits(BigInt(entitlementWei), 18);
+function truncateGdToTwoDecimals(value: string): string {
+  const dot = value.indexOf(".");
+  if (dot === -1) return value;
+
+  const whole = value.slice(0, dot);
+  const fraction = value.slice(dot + 1, dot + 3);
+  if (!fraction || /^0+$/.test(fraction)) return whole;
+
+  return `${whole}.${fraction.replace(/0+$/, "")}`;
 }
 
 export function formatGdAmount(amountWei: string): string {
-  let formatted = formatUnits(BigInt(amountWei), 18);
-  if (formatted.includes(".")) {
-    formatted = formatted.replace(/0+$/, "").replace(/\.$/, "");
-  }
-  return formatted || "0";
+  const formatted = formatUnits(BigInt(amountWei), 18);
+  return truncateGdToTwoDecimals(formatted) || "0";
+}
+
+export function formatEntitlementGd(entitlementWei: string): string {
+  return formatGdAmount(entitlementWei);
 }

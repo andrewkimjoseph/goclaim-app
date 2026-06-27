@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { formatClaimStatus } from "@/lib/formatClaimStatus";
 import { copy, formatClaimSchedule } from "@/lib/copy";
 
-type ClaimLog = {
+export type ClaimLog = {
   id: string;
   status: string;
   txHash: string | null;
@@ -17,6 +18,8 @@ type ClaimLog = {
 
 type ClaimHistoryTableProps = {
   logs: ClaimLog[];
+  limit?: number;
+  viewAllHref?: string;
 };
 
 function statusClass(status: string) {
@@ -25,8 +28,17 @@ function statusClass(status: string) {
   return "status-pending";
 }
 
-export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
+export function ClaimHistoryTable({
+  logs,
+  limit,
+  viewAllHref,
+}: ClaimHistoryTableProps) {
   const [claimSchedule] = useState(() => formatClaimSchedule());
+  const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
+  const showViewAll =
+    viewAllHref !== undefined &&
+    limit !== undefined &&
+    logs.length > limit;
 
   if (logs.length === 0) {
     return (
@@ -41,12 +53,17 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
     );
   }
 
+  const scrollClass =
+    limit === undefined
+      ? "overflow-x-auto overflow-y-auto max-h-[min(12rem,35vh)] min-h-0"
+      : "overflow-x-auto";
+
   return (
-      <div className="card flex flex-col">
+    <div className="card flex flex-col">
       <h3 className="font-display font-bold text-lg mb-3 shrink-0">
         {copy.goClaimHistory.title}
       </h3>
-      <div className="overflow-x-auto overflow-y-auto max-h-[min(12rem,35vh)] min-h-0">
+      <div className={scrollClass}>
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-white">
             <tr className="text-left text-foreground/60 border-b-2 border-black">
@@ -57,7 +74,7 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => {
+            {visibleLogs.map((log) => {
               const display = formatClaimStatus(log.status, log.errorMsg);
               return (
                 <tr
@@ -78,7 +95,7 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
                     </span>
                   </td>
                   <td className="py-2 pr-4 max-w-[7rem] truncate">
-                    {log.transfer?.amountGd ? `${log.transfer.amountGd} G$` : "—"}
+                    {log.transfer?.amountGd ?? "—"}
                   </td>
                   <td className="py-2">
                     {log.txHash ? (
@@ -102,6 +119,14 @@ export function ClaimHistoryTable({ logs }: ClaimHistoryTableProps) {
           </tbody>
         </table>
       </div>
+      {showViewAll && (
+        <Link
+          href={viewAllHref}
+          className="btn-secondary text-sm mt-4 text-center py-2"
+        >
+          {copy.goClaimHistory.viewAllHistory}
+        </Link>
+      )}
     </div>
   );
 }

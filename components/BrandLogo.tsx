@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const SIZES = {
   nav: 48,
   hero: 128,
@@ -28,13 +26,14 @@ export function BrandLogo({
   const px = resolveSize(size);
 
   return (
-    <Image
-      src="/brand/watermelon.png"
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/watermelon.svg"
       alt={alt}
       width={px}
       height={px}
       className={className}
-      priority={priority}
+      fetchPriority={priority ? "high" : undefined}
     />
   );
 }

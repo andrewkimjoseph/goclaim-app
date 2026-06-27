@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { type Address } from "viem";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -25,11 +25,19 @@ type ClaimLogRow = {
   transfer: TransferLogRow | null;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const claimLogsLimitParam = request.nextUrl.searchParams.get("claimLogsLimit");
+  const parsedLimit = claimLogsLimitParam
+    ? Number.parseInt(claimLogsLimitParam, 10)
+    : 20;
+  const claimLogsLimit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 1), 100)
+    : 20;
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -37,7 +45,7 @@ export async function GET() {
       agentWallet: true,
       claimLogs: {
         orderBy: { claimedAt: "desc" },
-        take: 20,
+        take: claimLogsLimit,
         include: { transfer: true },
       },
     },

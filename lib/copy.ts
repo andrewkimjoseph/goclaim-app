@@ -135,6 +135,9 @@ export const copy = {
     amount: "G$ sent",
     receipt: "Receipt",
     viewOnCeloscan: "View on Celoscan",
+    viewAllHistory: "View all GoClaims",
+    backToDashboard: "Dashboard",
+    pageSubtitle: "All your GoClaim runs",
   },
   time: {
     claimScheduleUtc: "every day at 12:00 PM UTC",
