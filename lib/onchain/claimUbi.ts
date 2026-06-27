@@ -109,6 +109,6 @@ export function formatEntitlementGd(entitlementWei: string): string {
 }
 
 export function formatGdWholeNumber(amountWei: string): string {
-  const whole = BigInt(amountWei) / 10n ** 18n;
+  const whole = BigInt(amountWei) / BigInt("1000000000000000000");
   return whole.toString();
 }

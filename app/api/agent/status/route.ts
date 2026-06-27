@@ -82,7 +82,7 @@ export async function GET() {
   });
   const totalWei = transfers.reduce(
     (sum, t) => sum + BigInt(t.amountWei),
-    0n
+    BigInt(0)
   );
 
   return NextResponse.json({
