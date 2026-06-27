@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "eslint .",
     "worker": "tsx worker/index.ts",
+    "worker:drain": "tsx worker/runUntilDrained.ts",
+    "queue:purge": "tsx scripts/purge-bullmq-jobs.ts",
     "claim-test": "tsx scripts/claim-test.ts",
     "rotate-keys": "tsx scripts/rotate-keys.ts",
     "db:migrate": "prisma migrate dev",

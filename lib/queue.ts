@@ -98,7 +98,7 @@ export function getClaimQueue(): Queue {
         attempts: 2,
         backoff: { type: "fixed", delay: 600_000 },
         removeOnComplete: { count: 100, age: 86_400 },
-        removeOnFail: { count: 200, age: 604_800 },
+        removeOnFail: { count: 50, age: 604_800 },
       },
     });
   }

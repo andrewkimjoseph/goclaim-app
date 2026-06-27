@@ -1,6 +1,6 @@
 # GoClaim Deployment Checklist
 
-> **Node 24 required.** Next.js 16 needs Node `>=20.9.0`, and Vercel deprecates Node 20 for deployments created on/after 2026-10-01. This is pinned to the Node 24 major via `engines` (`"node": "24.x"`) in `package.json` and `.nvmrc` (`24`) — a fixed major avoids Vercel auto-upgrading to a new major Node release. On Railway, also set `NIXPACKS_NODE_VERSION=24` on each service so the build image uses the same version.
+> **Node 24 required.** Next.js 16 needs Node `>=20.9.0`, and Vercel deprecates Node 20 for deployments created on/after 2026-10-01. This is pinned to the Node 24 major via `engines` (`"node": "24.x"`) in `package.json` and `.nvmrc` (`24`) — a fixed major avoids Vercel auto-upgrading to a new major Node release. On Railway, set `NIXPACKS_NODE_VERSION=24` on the cron service.
 
 ## 1. Neon Postgres
 
@@ -12,19 +12,20 @@
 1. Create a Redis database on Upstash
 2. Copy `UPSTASH_REDIS_URL` — the **Redis TCP** URL (`rediss://default:...@....upstash.io:6379`), not the REST URL
 
-**Command usage:** Redis is used only by BullMQ (claim queue). The dashboard and auth APIs do not touch Redis. An always-on worker polls Redis even when the queue is empty — idle polling dominates Upstash command count. Tune `WORKER_DRAIN_DELAY_SEC` on Railway to limit it.
+**Command usage:** Redis is used only by BullMQ (claim queue). The dashboard and auth APIs do not touch Redis. Production runs the worker **only during the daily cron batch** (enqueue → drain → exit), so idle polling is near zero between runs.
 
-Rough idle polling estimates (one worker, 24/7):
+BullMQ job records in Redis are auto-purged (`removeOnComplete: 100`, `removeOnFail: 50`). Claim audit history lives in Postgres (`ClaimLog`). Run `npm run queue:purge` once after deploy to flush legacy Redis keys.
+
+**Local dev:** Do not run `npm run worker` against prod Upstash unless testing the queue — it adds idle polling. For single claims, use `USER_ID=<cuid> npm run claim-test`. To process an enqueued batch locally: `npm run worker:drain`.
+
+If you use the long-running local worker (`npm run worker`), tune idle polling:
 
 | `WORKER_DRAIN_DELAY_SEC` | Idle polls/month | Est. Redis commands/month |
 | --- | --- | --- |
-| 30 | ~86,400 | ~50k–90k |
-| 60 | ~43,200 | ~25k–45k |
 | 120 | ~21,600 | ~15k–25k |
+| 300 | ~8,640 | ~6k–10k |
 
-GoClaim cron runs once daily at 12:00 UTC, so 120s drain adds at most ~2 minutes before the worker picks up new jobs — acceptable for a daily batch.
-
-**Local dev:** Do not run `npm run worker` unless you are testing the queue — it shares Upstash and doubles idle polling. For single claims, use `USER_ID=<cuid> npm run claim-test` instead. If you need a local worker, set `WORKER_DRAIN_DELAY_SEC=120` in `.env.local`.
+Production cron-drain does not need drain-delay tuning.
 
 ## 3. Generate secrets
 
@@ -48,108 +49,94 @@ Env vars:
 
 Deploy: connect repo, build uses `vercel.json`.
 
-## 5. Railway (Worker)
+## 5. Railway (cron + drain worker)
 
-Env vars:
+Production uses **one Railway service**. It enqueues claims via Vercel, drains the BullMQ queue, then exits. There is no always-on worker.
 
-- `DATABASE_URL`
-- `UPSTASH_REDIS_URL`
-- `ENCRYPTION_MASTER_KEY`
-- `PIMLICO_API_KEY`
-- `DRPC_API_KEY` (optional)
-- `WORKER_CONCURRENCY` (optional, default `5`)
-- `WORKER_DRAIN_DELAY_SEC` (optional, default `120` — seconds between idle queue polls)
+Flow: Railway Cron → Vercel `/api/internal/trigger-claims` → Upstash Redis → `worker/runUntilDrained.ts` → Celo → exit.
 
-Start command: `npm run worker` (via `railway.toml`).
-
-Recommended Railway values for low Upstash command volume:
-
-```
-WORKER_CONCURRENCY=5
-WORKER_DRAIN_DELAY_SEC=120
-```
-
-Redeploy the worker after changing these. Monitor Upstash → Usage over 24–48h; command count should drop ~4x compared to a 30s drain.
-
-## 6. Railway Cron
-
-The cron is a **separate Railway service** from the worker. It fires one HTTP POST to the
-Vercel `trigger-claims` endpoint, which enqueues claim jobs the always-on worker then
-processes. Flow: Railway Cron -> Vercel `/api/internal/trigger-claims` -> Upstash Redis ->
-Railway Worker -> Celo.
-
-> **Important: the cron needs its own config file.** Both services deploy from the same repo,
-> and the repo-root `railway.toml` defines `startCommand = "node_modules/.bin/tsx worker/index.ts"`.
-> Railway gives config-file values precedence over dashboard settings, so a cron service left on
-> the default `railway.toml` will run the **worker** (and crash with `Missing UPSTASH_REDIS_URL`)
-> regardless of any Custom Start Command set in the UI. The cron service must point at
-> `railway.cron.toml` instead.
-
-`railway.cron.toml` (committed at the repo root) defines everything the cron needs in code:
+Everything is defined in the repo-root [`railway.toml`](railway.toml) — Railway picks it up automatically; no separate config file path needed.
 
 ```toml
 [build]
 builder = "NIXPACKS"
-buildCommand = "echo skip-cron-build"
+buildCommand = "node_modules/.bin/prisma generate"
 
 [deploy]
-startCommand = 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET"'
+startCommand = 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET" && node_modules/.bin/tsx worker/runUntilDrained.ts'
 restartPolicyType = "NEVER"
 cronSchedule = "0 12 * * *"
 ```
 
-- `buildCommand = "echo skip-cron-build"` — the cron only fires `curl`, so it must NOT run
-  `next build`. Without this, Nixpacks auto-runs `npm run build`, which prerenders `/_not-found`,
-  evaluates the wagmi config, and fails with a WalletConnect error because the cron service has no
-  `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`. Skipping the build avoids both the wasted work and that
-  failure.
-- `restartPolicyType = "NEVER"` — a cron must run once and exit. `ON_FAILURE`/always-on makes
-  Railway treat it as a long-running service and it never gets scheduled.
+- `buildCommand` runs `prisma generate` only — **not** `next build` (that runs on Vercel).
+- `restartPolicyType = "NEVER"` — cron runs once and exits; always-on restart policies prevent scheduling.
 - `cronSchedule = "0 12 * * *"` — daily at 12:00 UTC.
-- The start command uses `curl` (present in Nixpacks images). `-s` silences progress; `-f` exits
-  non-zero on an HTTP 4xx/5xx so a failed trigger shows as a failed cron run. Railway runs the
-  command in a shell, so no `sh -c` wrapper is needed.
+- Start command enqueues via `curl`, then runs `worker/runUntilDrained.ts`. `-f` on curl exits non-zero on HTTP 4xx/5xx so a failed trigger skips the worker.
 
-> The worker's `railway.toml` likewise sets `buildCommand = "node_modules/.bin/prisma generate"`
-> so the worker only generates the Prisma client and skips `next build` too — neither Railway
-> service needs the Next.js web build (that runs on Vercel).
+### Env vars (Railway service)
 
-### Create the cron service
+- `NEXT_PUBLIC_APP_URL` (e.g. `https://app.goclaim.xyz`)
+- `CRON_SECRET` (must match Vercel)
+- `UPSTASH_REDIS_URL`
+- `DATABASE_URL`
+- `ENCRYPTION_MASTER_KEY`
+- `PIMLICO_API_KEY`
+- `DRPC_API_KEY` (optional)
+- `WORKER_CONCURRENCY` (optional, default `5`)
+- `WORKER_LOCK_DURATION_MS` (optional, default `120000`)
+- `WORKER_LOCK_RENEW_MS` (optional, default `60000`)
+- `WORKER_MAX_RUN_MS` (optional, default `3600000` — 1 hour safety cap)
+- `NIXPACKS_NODE_VERSION=24` (optional)
 
-1. Railway -> New service -> deploy from the **same GitHub repo** (do not reuse the worker service).
-2. Cron service -> Settings -> Config-as-code: set the **Railway Config File** path to
-   `railway.cron.toml`. This is what makes the cron run the trigger instead of the worker.
-3. Env vars on the cron service:
-   - `NEXT_PUBLIC_APP_URL` (e.g. `https://app.goclaim.xyz`)
-   - `CRON_SECRET` (must match the value set on Vercel)
-   - `NIXPACKS_NODE_VERSION=24` (optional)
-   - Do **not** set `UPSTASH_REDIS_URL` here — the cron only fires an HTTP request and never
-     touches Redis.
-4. Redeploy the cron service so the config file takes effect.
+Runtime budget: with concurrency 5 and ~30–45s per claim, 100 users ≈ 10 min, 500 users ≈ 50 min. Increase `WORKER_MAX_RUN_MS` if batches grow.
 
-If `curl` is ever unavailable in the image, swap the `startCommand` for this no-curl fallback
-(uses Node's global `fetch`):
+Local queue testing uses `npm run worker` or `npm run worker:drain` — not Railway.
+
+### Fresh Railway setup
+
+If migrating from the old two-service layout (always-on worker + cron), delete both existing Railway services and create one new service:
+
+1. Railway → **New service** → deploy from the GoClaim GitHub repo.
+2. Do **not** set a custom Railway Config File path — the default `railway.toml` at repo root is correct.
+3. Add all env vars listed above.
+4. Confirm the service is scheduled as a **cron** (schedule comes from `railway.toml`).
+5. Deploy.
+
+### Deploy sequence
+
+1. Push code and deploy the Railway service.
+2. Run `npm run queue:purge` once (local with prod env) to flush stale Redis job keys — only when no jobs are in-flight.
+3. Trigger a test run (Railway manual cron trigger, or curl + `npm run worker:drain` locally).
+4. Confirm logs show jobs completed and the process exits 0.
+5. Monitor Upstash Usage — expect near-zero commands between daily runs.
+
+If `curl` is ever unavailable in the image, swap the trigger half of `startCommand` for this no-curl fallback (keep the `&& tsx worker/runUntilDrained.ts` suffix):
 
 ```toml
-startCommand = "node -e \"fetch(process.env.NEXT_PUBLIC_APP_URL+'/api/internal/trigger-claims',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(async r=>{console.log(r.status, await r.text()); process.exit(r.ok?0:1)}).catch(e=>{console.error(e); process.exit(1)})\""
+startCommand = 'node -e "fetch(process.env.NEXT_PUBLIC_APP_URL+\"/api/internal/trigger-claims\",{method:\"POST\",headers:{Authorization:\"Bearer \"+process.env.CRON_SECRET}}).then(async r=>{console.log(r.status, await r.text()); if(!r.ok) process.exit(1)}).catch(e=>{console.error(e); process.exit(1)})" && node_modules/.bin/tsx worker/runUntilDrained.ts'
 ```
 
 ### If the cron "didn't run", check
 
-- **Cron service still using `railway.toml`** — it will run the worker and crash with
-  `Missing UPSTASH_REDIS_URL`. Point its config file path at `railway.cron.toml`.
-- **Build failed prerendering `/_not-found` with a WalletConnect error** — the cron tried to run
-  `next build` without `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`. `railway.cron.toml` skips the build
-  via `buildCommand`; make sure the cron service is using that config file.
-- **Build image failed on an old Node** — Next 16 needs Node 20.9+; this repo pins Node 24 (see top of this file).
-- **Restart Policy not `Never`** — Railway won't schedule a service it considers always-on (set via `railway.cron.toml`).
+- **Service type is always-on instead of cron** — `restartPolicyType` must be `NEVER` and `cronSchedule` must be set in `railway.toml`.
+- **Build failed running `next build`** — Railway tried the wrong build command. Confirm `buildCommand = "node_modules/.bin/prisma generate"` in `railway.toml` (not `npm run build`).
+- **Build image failed on an old Node** — set `NIXPACKS_NODE_VERSION=24`.
 - **`NEXT_PUBLIC_APP_URL` / `CRON_SECRET` missing or mismatched** with Vercel.
+- **Missing worker env vars** (`UPSTASH_REDIS_URL`, `DATABASE_URL`, etc.) — drain step will fail after curl succeeds.
 
-### Equivalent manual command
+### Manual trigger + drain
+
+Enqueue only (jobs sit until next cron or manual drain):
 
 ```bash
-curl -s -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" \
+curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" \
   -H "Authorization: Bearer $CRON_SECRET"
+```
+
+Process enqueued jobs locally:
+
+```bash
+npm run worker:drain
 ```
 
 ## 7. Smoke test
@@ -158,11 +145,12 @@ curl -s -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" \
 2. Sign SIWE → agent created → onboarding modal shown
 3. Link smart account in GoodDollar
 4. Dashboard shows status `active`
-5. Manual trigger:
+5. Manual trigger + drain:
 
 ```bash
-curl -X POST https://your-domain/api/internal/trigger-claims \
+curl -sf -X POST https://your-domain/api/internal/trigger-claims \
   -H "Authorization: Bearer $CRON_SECRET"
+npm run worker:drain
 ```
 
 6. Verify `ClaimLog` success + G$ in root wallet on Celoscan

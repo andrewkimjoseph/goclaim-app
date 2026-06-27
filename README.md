@@ -23,8 +23,7 @@ flowchart TB
   end
 
   subgraph railway [Railway]
-    Worker["BullMQ worker"]
-    Cron["Cron 12:00 UTC"]
+    Cron["Cron 12:00 UTC + drain worker"]
   end
 
   subgraph chain [Celo mainnet]
@@ -37,9 +36,9 @@ flowchart TB
   API --> Neon
   Cron -->|"POST /api/internal/trigger-claims"| API
   API --> Redis
-  Worker --> Redis
-  Worker --> Neon
-  Worker --> Pimlico
+  Cron -->|"runUntilDrained"| Redis
+  Cron --> Neon
+  Cron --> Pimlico
   Pimlico --> GD
   Dashboard -->|"SIWE + link tx"| GD
 ```
@@ -51,8 +50,8 @@ flowchart TB
 | **Next.js app (Vercel)** | Landing, dashboard, FAQs, auth + agent APIs | `app/`, `components/` |
 | **Postgres (Neon)** | Users, encrypted agent keys, claim/transfer logs, SIWE nonces | `prisma/schema.prisma` |
 | **Redis (Upstash)** | BullMQ claim queue only (not used by dashboard/auth) | `lib/queue.ts` |
-| **Worker (Railway)** | Consumes queue, runs claims | `worker/index.ts`, `worker/jobs/processClaim.ts` |
-| **Cron (Railway)** | Daily trigger at 12:00 UTC | `app/api/internal/trigger-claims/route.ts` |
+| **Cron + drain worker (Railway)** | Daily trigger, process queue, exit | `railway.toml`, `worker/runUntilDrained.ts` |
+| **Claim processor** | Runs UBI claim + G$ transfer | `worker/jobs/processClaim.ts` |
 | **Pimlico + permissionless** | ERC-4337 UserOps for claim + G$ transfer | `lib/onchain/smartAccountClient.ts`, `lib/onchain/claimUbi.ts` |
 
 ## User lifecycle
@@ -71,21 +70,21 @@ sequenceDiagram
   participant Cron
   participant API as trigger_claims_API
   participant Redis as BullMQ
-  participant Worker
   participant DB as Postgres
   participant Chain as Celo
 
   Cron->>API: POST Bearer CRON_SECRET
   API->>DB: active AgentWallets
   API->>Redis: enqueue userId jobs in waves
-  Worker->>Redis: poll job
-  Worker->>DB: decrypt key, load user
-  Worker->>Chain: check eligibility
-  Worker->>Chain: UserOp claim + transfer
-  Worker->>DB: ClaimLog + TransferLog
+  Cron->>Redis: runUntilDrained worker
+  Cron->>DB: decrypt key, load user
+  Cron->>Chain: check eligibility
+  Cron->>Chain: UserOp claim + transfer
+  Cron->>DB: ClaimLog + TransferLog
+  Cron->>Cron: exit when queue empty
 ```
 
-Jobs are enqueued in waves of 50 with a 2s gap between waves (`lib/queue.ts`). The worker supports `WORKER_CONCURRENCY` (default 5) and `WORKER_DRAIN_DELAY_SEC` (default 120) to tune Upstash Redis usage.
+Jobs are enqueued in waves of 50 with a 2s gap between waves (`lib/queue.ts`). The drain worker uses `WORKER_CONCURRENCY` (default 5), `WORKER_LOCK_DURATION_MS` (default 120s), and exits when the queue is empty — no 24/7 idle polling.
 
 ## Database schema
 
@@ -140,9 +139,9 @@ lib/
   onchain/     # Celo / GoodDollar / ERC-4337
   hooks/       # useSession, useSiweAuth, useWalletVerification
   queue.ts     # BullMQ enqueue + Redis connection
-worker/        # Railway claim worker
+worker/        # claim worker (runUntilDrained + local manual worker)
 prisma/        # schema + migrations
-scripts/       # claim-test, rotate-keys
+scripts/       # claim-test, queue:purge, rotate-keys
 ```
 
 ## Local development
@@ -164,7 +163,7 @@ For a single-user claim test (preferred over running the worker locally against 
 USER_ID=<cuid> npm run claim-test
 ```
 
-To test the full queue locally, run the worker in a second terminal (`npm run worker`). See [DEPLOY.md](./DEPLOY.md) for Upstash tuning guidance.
+To test the full queue locally, enqueue via curl then run `npm run worker:drain`. For a long-running local worker, use `npm run worker`. See [DEPLOY.md](./DEPLOY.md).
 
 ## Scripts
 
@@ -172,7 +171,9 @@ To test the full queue locally, run the worker in a second terminal (`npm run wo
 |--------|-------------|
 | `npm run dev` | Next.js dev server |
 | `npm run build` | Production build |
-| `npm run worker` | BullMQ claim worker |
+| `npm run worker` | Long-running BullMQ worker (local/manual) |
+| `npm run worker:drain` | Process queue until empty, then exit |
+| `npm run queue:purge` | One-time cleanup of stale Redis job records |
 | `npm run claim-test` | Manual claim for one user (`USER_ID=...`) |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:generate` | Generate Prisma client |
@@ -181,10 +182,9 @@ To test the full queue locally, run the worker in a second terminal (`npm run wo
 ## Deployment
 
 - **Vercel** — Next.js app (landing, dashboard, APIs).
-- **Railway** — always-on BullMQ worker (`npm run worker`).
-- **Railway Cron** — `0 12 * * *` UTC hits `/api/internal/trigger-claims`.
+- **Railway** — daily `0 12 * * *` UTC cron: trigger claims + drain worker (`railway.toml`).
 - **Neon** — Postgres.
-- **Upstash** — Redis for BullMQ only.
+- **Upstash** — Redis for BullMQ only (no idle polling between daily runs).
 
 Full env var lists, smoke tests, and operational checklists are in [DEPLOY.md](./DEPLOY.md).
 

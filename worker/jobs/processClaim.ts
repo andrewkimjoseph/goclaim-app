@@ -6,7 +6,7 @@ import { claimUbi } from "@/lib/onchain/claimUbi";
 import { checkUbiClaimEligibility } from "@/lib/onchain/eligibility";
 import type { ClaimJobData } from "@/lib/queue";
 
-const CLAIM_TIMEOUT_MS = 30_000;
+const CLAIM_TIMEOUT_MS = 45_000;
 
 export async function processClaim(data: ClaimJobData): Promise<void> {
   const { userId, waveIndex } = data;
