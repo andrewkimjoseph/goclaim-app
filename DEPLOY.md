@@ -68,38 +68,58 @@ Vercel `trigger-claims` endpoint, which enqueues claim jobs the always-on worker
 processes. Flow: Railway Cron -> Vercel `/api/internal/trigger-claims` -> Upstash Redis ->
 Railway Worker -> Celo.
 
+> **Important: the cron needs its own config file.** Both services deploy from the same repo,
+> and the repo-root `railway.toml` defines `startCommand = "node_modules/.bin/tsx worker/index.ts"`.
+> Railway gives config-file values precedence over dashboard settings, so a cron service left on
+> the default `railway.toml` will run the **worker** (and crash with `Missing UPSTASH_REDIS_URL`)
+> regardless of any Custom Start Command set in the UI. The cron service must point at
+> `railway.cron.toml` instead.
+
+`railway.cron.toml` (committed at the repo root) defines everything the cron needs in code:
+
+```toml
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET"'
+restartPolicyType = "NEVER"
+cronSchedule = "0 12 * * *"
+```
+
+- `restartPolicyType = "NEVER"` — a cron must run once and exit. `ON_FAILURE`/always-on makes
+  Railway treat it as a long-running service and it never gets scheduled.
+- `cronSchedule = "0 12 * * *"` — daily at 12:00 UTC.
+- The start command uses `curl` (present in Nixpacks images). `-s` silences progress; `-f` exits
+  non-zero on an HTTP 4xx/5xx so a failed trigger shows as a failed cron run. Railway runs the
+  command in a shell, so no `sh -c` wrapper is needed.
+
 ### Create the cron service
 
 1. Railway -> New service -> deploy from the **same GitHub repo** (do not reuse the worker service).
-2. Service Settings:
-   - **Cron Schedule:** `0 12 * * *` (UTC)
-   - **Restart Policy:** `Never` — a cron service must run once and exit. `On Failure`/always-on
-     makes Railway treat it as a long-running service and it will never be scheduled.
-   - **Build Command (optional):** `echo skip` — the cron only sends an HTTP request, so it does
-     not need `next build` or `prisma generate`.
-   - **Start Command:** Nixpacks images include `curl`. `-s` silences progress; `-f` makes curl
-     exit non-zero on an HTTP 4xx/5xx so a failed trigger shows as a failed cron run:
-
-```bash
-sh -c 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET"'
-```
-
-   - **No-curl fallback** (uses Node's global `fetch`):
-
-```bash
-node -e "fetch(process.env.NEXT_PUBLIC_APP_URL+'/api/internal/trigger-claims',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(async r=>{console.log(r.status, await r.text()); process.exit(r.ok?0:1)}).catch(e=>{console.error(e); process.exit(1)})"
-```
-
+2. Cron service -> Settings -> Config-as-code: set the **Railway Config File** path to
+   `railway.cron.toml`. This is what makes the cron run the trigger instead of the worker.
 3. Env vars on the cron service:
    - `NEXT_PUBLIC_APP_URL` (e.g. `https://app.goclaim.xyz`)
    - `CRON_SECRET` (must match the value set on Vercel)
-   - `NIXPACKS_NODE_VERSION=24`
+   - `NIXPACKS_NODE_VERSION=24` (optional)
+   - Do **not** set `UPSTASH_REDIS_URL` here — the cron only fires an HTTP request and never
+     touches Redis.
+4. Redeploy the cron service so the config file takes effect.
+
+If `curl` is ever unavailable in the image, swap the `startCommand` for this no-curl fallback
+(uses Node's global `fetch`):
+
+```toml
+startCommand = "node -e \"fetch(process.env.NEXT_PUBLIC_APP_URL+'/api/internal/trigger-claims',{method:'POST',headers:{Authorization:'Bearer '+process.env.CRON_SECRET}}).then(async r=>{console.log(r.status, await r.text()); process.exit(r.ok?0:1)}).catch(e=>{console.error(e); process.exit(1)})\""
+```
 
 ### If the cron "didn't run", check
 
+- **Cron service still using `railway.toml`** — it will run the worker and crash with
+  `Missing UPSTASH_REDIS_URL`. Point its config file path at `railway.cron.toml`.
 - **Build image failed on an old Node** — Next 16 needs Node 20.9+; this repo pins Node 24 (see top of this file).
-- **No cron service existed** — `railway.toml` only defines the worker; the cron is a second service.
-- **Restart Policy not `Never`** — Railway won't schedule a service it considers always-on.
+- **Restart Policy not `Never`** — Railway won't schedule a service it considers always-on (set via `railway.cron.toml`).
 - **`NEXT_PUBLIC_APP_URL` / `CRON_SECRET` missing or mismatched** with Vercel.
 
 ### Equivalent manual command
