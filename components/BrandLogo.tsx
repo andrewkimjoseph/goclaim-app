@@ -29,7 +29,7 @@ export function BrandLogo({
 
   return (
     <Image
-      src="/brand/logo-watermelon.png"
+      src="/brand/watermelon.png"
       alt={alt}
       width={px}
       height={px}

@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   description:
     "GoClaim claims GoodDollar for you every day and sends it straight to your wallet.",
   icons: {
-    icon: "/brand/logo-watermelon.png",
-    apple: "/brand/logo-watermelon.png",
+    icon: "/brand/watermelon.png",
+    apple: "/brand/watermelon.png",
   },
 };
 
