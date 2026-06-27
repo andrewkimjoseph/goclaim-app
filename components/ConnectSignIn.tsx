@@ -247,14 +247,14 @@ export function ConnectSignIn({
                       type="button"
                       onClick={handleGetVerified}
                       disabled={isGeneratingLink || isRedirecting}
-                      className={`${secondaryBtn} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
+                      className={`${primaryBtn} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
                     >
                       {(isGeneratingLink || isRedirecting) && (
                         <InlineSpinner
                           className={
                             isHero
-                              ? "border-white/30 border-t-white"
-                              : "border-black/30 border-t-black"
+                              ? "border-black/30 border-t-black"
+                              : "border-white/30 border-t-white"
                           }
                         />
                       )}
@@ -279,7 +279,7 @@ export function ConnectSignIn({
                   )}
 
                   {isHero ? (
-                    <button onClick={openAccountModal} className={`${secondaryBtn} text-sm`}>
+                    <button onClick={openAccountModal} className="btn-hero-tertiary text-sm">
                       {copy.auth.changeWallet}
                     </button>
                   ) : (
