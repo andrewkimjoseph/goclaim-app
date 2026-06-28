@@ -58,8 +58,8 @@ export const copy = {
     },
     step2: {
       title: "Link to GoodDollar",
-      body: "Approve once in your wallet to link GoClaim to GoodDollar.",
-      cta: "Link GoClaim to GoodDollar",
+      body: "Confirm once in your wallet.",
+      cta: "Approve",
     },
     step3: {
       title: "All set",
