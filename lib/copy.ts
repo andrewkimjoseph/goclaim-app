@@ -104,6 +104,7 @@ export const copy = {
     walletLabel: "Your Wallet",
     finishSetupCta: "Finish setup",
     backToHome: "Back to home",
+    retry: "Retry",
     signOut: "Sign out",
   },
   setupChecklist: {
@@ -133,7 +134,7 @@ export const copy = {
     },
   },
   goClaimHistory: {
-    title: "GoClaim history",
+    title: "GoClaim History",
     empty: (claimSchedule: string) =>
       `No GoClaims yet. After you link your smart account, the first GoClaim runs ${claimSchedule}.`,
     date: "Date",
@@ -152,7 +153,7 @@ export const copy = {
   faqs: {
     title: "FAQs",
     subtitle: "Quick answers about how GoClaim works.",
-    backToHome: "HOME",
+    backToDashboard: "Dashboard",
     homeLink: "Questions? Read the FAQs",
     headerButton: "FAQs",
     items: [

@@ -12,15 +12,16 @@ export const metadata: Metadata = {
 export default function FaqsPage() {
   return (
     <div className="app-shell pb-6 min-h-screen">
-      <header className="header-bar">
-        <Link href="/">
+      <header className="header-bar" style={{ viewTransitionName: "site-header" }}>
+        <Link href="/dashboard">
           <BrandLogo size="nav" />
         </Link>
         <Link
-          href="/"
+          href="/dashboard"
+          transitionTypes={["nav-back"]}
           className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
         >
-          {copy.faqs.backToHome}
+          {copy.faqs.backToDashboard}
         </Link>
       </header>
 
