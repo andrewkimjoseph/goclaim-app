@@ -115,9 +115,16 @@ function truncateGdToTwoDecimals(value: string): string {
   return `${whole}.${fraction.replace(/0+$/, "")}`;
 }
 
+const gdNumberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+});
+
 export function formatGdAmount(amountWei: string): string {
   const formatted = formatUnits(BigInt(amountWei), 18);
-  return truncateGdToTwoDecimals(formatted) || "0";
+  const truncated = truncateGdToTwoDecimals(formatted) || "0";
+  const value = Number(truncated);
+  return Number.isFinite(value) ? gdNumberFormatter.format(value) : truncated;
 }
 
 export function formatEntitlementGd(entitlementWei: string): string {
