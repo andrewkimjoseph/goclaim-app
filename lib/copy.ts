@@ -58,8 +58,8 @@ export const copy = {
     },
     step2: {
       title: "Link to GoodDollar",
-      body: "Approve one transaction from your wallet. This tells GoodDollar your GoClaim smart account can claim for you.",
-      cta: "Link smart account to GoodDollar",
+      body: "Approve once in your wallet to link GoClaim to GoodDollar.",
+      cta: "Link GoClaim to GoodDollar",
     },
     step3: {
       title: "All set",

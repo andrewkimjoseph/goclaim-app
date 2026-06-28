@@ -29,7 +29,7 @@ export async function sendTaggedConnectAccount({
 }): Promise<Hash> {
   const provider = (window as Window & { ethereum?: EIP1193Provider }).ethereum;
   if (!provider) {
-    throw new Error("No wallet found. Open this in your Celo wallet.");
+    throw new Error("No wallet found. Open this in your wallet.");
   }
 
   const walletClient = createWalletClient({
