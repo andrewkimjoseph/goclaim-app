@@ -89,11 +89,17 @@ export const copy = {
     loading: "Loading...",
     setupGoClaim: "Set up GoClaim",
     noAgent: "Your GoClaim smart account is not set up yet.",
+    streakLabel: "GoClaim Streak",
+    streakDays: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+    streakEmpty: "GoClaim daily to build your streak.",
+    streakDescription:
+      "Your streak counts consecutive days you've successfully GoClaimed. GoClaim runs automatically each day — keep it going to build your streak. If you miss a day, it resets to zero.",
+    streakClose: "Got it",
     totalGoClaims: "Total GoClaims",
     totalGGoClaimed: "Total G$ GoClaimed",
     rootGdBalance: "Current G$ balance",
     lastGoClaimed: "Last GoClaim",
-    smartAccountLabel: "GoClaim smart account",
+    smartAccountLabel: "GoClaim Smart Account",
     smartAccountHint:
       "This GoClaim smart account claims for you automatically.",
     walletLabel: "Your wallet (receives G$)",

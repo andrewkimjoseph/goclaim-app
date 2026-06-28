@@ -7,6 +7,7 @@ import { resolveAgentAddresses } from "@/lib/onchain/resolveAgentAddresses";
 import { publicClient } from "@/lib/onchain/config";
 import { formatEntitlementGd, formatGdAmount } from "@/lib/onchain/claimUbi";
 import { getRootGdBalance } from "@/lib/onchain/getRootGdBalance";
+import { computeClaimStreak, parseTimezoneParam } from "@/lib/computeClaimStreak";
 
 type TransferLogRow = {
   recipientAddress: string;
@@ -39,6 +40,8 @@ export async function GET(request: NextRequest) {
   const claimLogsLimit = Number.isFinite(parsedLimit)
     ? Math.min(Math.max(parsedLimit, 1), 100)
     : 20;
+
+  const timeZone = parseTimezoneParam(request.nextUrl.searchParams.get("timezone"));
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -90,8 +93,13 @@ export async function GET(request: NextRequest) {
 
   const successfulClaims = await prisma.claimLog.findMany({
     where: { userId: user.id, status: "success" },
-    select: { id: true },
+    select: { claimedAt: true },
   });
+
+  const claimStreak = computeClaimStreak(
+    successfulClaims.map((c) => c.claimedAt),
+    timeZone
+  );
 
   const transfers = await prisma.transferLog.findMany({
     where: { userId: user.id },
@@ -121,6 +129,7 @@ export async function GET(request: NextRequest) {
     whitelistedRoot: link.whitelistedRoot,
     lifetimeClaims: successfulClaims.length,
     lifetimeGdClaimed: formatGdAmount(totalWei.toString()),
+    claimStreak,
     rootGdBalance,
     claimLogs: (user.claimLogs as ClaimLogRow[]).map((log) => ({
       id: log.id,

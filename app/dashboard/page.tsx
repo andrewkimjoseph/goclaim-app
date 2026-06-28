@@ -9,6 +9,7 @@ import { ClaimHistoryTable } from "@/components/ClaimHistoryTable";
 import { CopyAddress } from "@/components/CopyAddress";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { SetupChecklist } from "@/components/SetupChecklist";
+import { StreakBadge, StreakModal } from "@/components/StreakCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { copy, formatClaimSchedule } from "@/lib/copy";
 
@@ -24,6 +25,7 @@ type AgentStatus = {
   linkComplete?: boolean;
   lifetimeClaims?: number;
   lifetimeGdClaimed?: string;
+  claimStreak?: number;
   rootGdBalance?: string | null;
   claimLogs?: Array<{
     id: string;
@@ -47,6 +49,7 @@ export default function DashboardPage() {
   const [status, setStatus] = useState<AgentStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const autoOnboardingShown = useRef(false);
   const [claimSchedule] = useState(() => formatClaimSchedule());
@@ -55,7 +58,11 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/agent/status", { credentials: "include" });
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(
+        `/api/agent/status?timezone=${encodeURIComponent(tz)}`,
+        { credentials: "include" }
+      );
       if (res.status === 401) {
         router.push("/");
         return;
@@ -143,12 +150,20 @@ export default function DashboardPage() {
         <Link href="/">
           <BrandLogo size="nav" />
         </Link>
-        <button
-          onClick={handleLogout}
-          className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
-        >
-          {copy.dashboard.signOut}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {linkComplete && (
+            <StreakBadge
+              streak={status.claimStreak ?? 0}
+              onOpen={() => setShowStreakModal(true)}
+            />
+          )}
+          <button
+            onClick={handleLogout}
+            className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
+          >
+            {copy.dashboard.signOut}
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 py-6 space-y-4">
@@ -261,6 +276,14 @@ export default function DashboardPage() {
           linkComplete={linkComplete}
           onConnected={fetchStatus}
           onClose={() => setShowOnboarding(false)}
+        />
+      )}
+
+      {linkComplete && (
+        <StreakModal
+          streak={status.claimStreak ?? 0}
+          open={showStreakModal}
+          onClose={() => setShowStreakModal(false)}
         />
       )}
     </div>
