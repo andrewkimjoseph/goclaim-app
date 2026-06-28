@@ -6,6 +6,7 @@ import { getLinkStatus } from "@/lib/onchain/eligibility";
 import { resolveAgentAddresses } from "@/lib/onchain/resolveAgentAddresses";
 import { publicClient } from "@/lib/onchain/config";
 import { formatEntitlementGd, formatGdAmount } from "@/lib/onchain/claimUbi";
+import { getRootGdBalance } from "@/lib/onchain/getRootGdBalance";
 
 type TransferLogRow = {
   recipientAddress: string;
@@ -55,10 +56,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  let rootGdBalance: string | null = null;
+  try {
+    rootGdBalance = await getRootGdBalance(user.rootAddress as Address);
+  } catch {
+    rootGdBalance = null;
+  }
+
   if (!user.agentWallet) {
     return NextResponse.json({
       hasAgent: false,
       rootAddress: user.rootAddress,
+      rootGdBalance,
     });
   }
 
@@ -112,6 +121,7 @@ export async function GET(request: NextRequest) {
     whitelistedRoot: link.whitelistedRoot,
     lifetimeClaims: successfulClaims.length,
     lifetimeGdClaimed: formatGdAmount(totalWei.toString()),
+    rootGdBalance,
     claimLogs: (user.claimLogs as ClaimLogRow[]).map((log) => ({
       id: log.id,
       status: log.status,

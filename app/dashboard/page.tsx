@@ -24,6 +24,7 @@ type AgentStatus = {
   linkComplete?: boolean;
   lifetimeClaims?: number;
   lifetimeGdClaimed?: string;
+  rootGdBalance?: string | null;
   claimLogs?: Array<{
     id: string;
     status: string;
@@ -205,6 +206,18 @@ export default function DashboardPage() {
             title={status.lifetimeGdClaimed ?? "0"}
           >
             {status.lifetimeGdClaimed ?? "0"}
+          </p>
+        </div>
+
+        <div className="card">
+          <p className="text-xs font-display font-semibold text-shell">
+            {copy.dashboard.rootGdBalance}
+          </p>
+          <p
+            className="font-display font-extrabold text-3xl text-primary mt-2 truncate"
+            title={status.rootGdBalance ?? undefined}
+          >
+            {status.rootGdBalance ?? "—"}
           </p>
         </div>
 
