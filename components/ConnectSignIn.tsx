@@ -134,7 +134,7 @@ export function ConnectSignIn({
   }
 
   const isHero = variant === "hero";
-  const primaryBtn = isHero ? "btn-hero-primary" : "btn-primary";
+  const primaryBtn = "btn-primary";
   const secondaryBtn = isHero ? "btn-hero-secondary" : "btn-secondary";
   const ghostBtn = isHero ? "btn-hero-secondary" : "btn-ghost";
   const hintErrorClass = isHero ? "text-red-200" : "text-red-600";
@@ -214,10 +214,7 @@ export function ConnectSignIn({
               })}
             >
               {!connected ? (
-                <button
-                  onClick={openConnectModal}
-                  className={isHero ? "btn-primary" : primaryBtn}
-                >
+                <button onClick={openConnectModal} className={primaryBtn}>
                   {label}
                 </button>
               ) : chain.unsupported ? (
@@ -241,13 +238,7 @@ export function ConnectSignIn({
                       className={`${primaryBtn} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
                     >
                       {(isGeneratingLink || isRedirecting) && (
-                        <InlineSpinner
-                          className={
-                            isHero
-                              ? "border-black/30 border-t-black"
-                              : "border-white/30 border-t-white"
-                          }
-                        />
+                        <InlineSpinner className="border-white/30 border-t-white" />
                       )}
                       {getVerifiedLabel}
                     </button>
