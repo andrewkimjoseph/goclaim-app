@@ -171,7 +171,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      <footer className="pt-4">
+      <footer>
         <button
           onClick={() => setShowSignOutModal(true)}
           className="btn-hero-tertiary"
