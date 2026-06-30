@@ -35,10 +35,7 @@ export function ClaimHistoryTable({
 }: ClaimHistoryTableProps) {
   const [claimSchedule] = useState(() => formatClaimSchedule());
   const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
-  const showViewAll =
-    viewAllHref !== undefined &&
-    limit !== undefined &&
-    logs.length > limit;
+  const showViewAll = viewAllHref !== undefined && logs.length > 1;
 
   if (logs.length === 0) {
     return (

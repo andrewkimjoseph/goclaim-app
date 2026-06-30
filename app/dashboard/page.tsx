@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const autoOnboardingShown = useRef(false);
   const [claimSchedule] = useState(() => formatClaimSchedule());
 
-  const { data: status, isLoading, error, refetch } = useAgentStatus();
+  const { data: status, isLoading, error, refetch } = useAgentStatus(2);
 
   const fetchStatus = useCallback(() => {
     void refetch();
@@ -163,7 +163,7 @@ export default function DashboardPage() {
             {linkComplete && (
               <ClaimHistoryTable
                 logs={status.claimLogs ?? []}
-                limit={3}
+                limit={1}
                 viewAllHref="/history"
               />
             )}
