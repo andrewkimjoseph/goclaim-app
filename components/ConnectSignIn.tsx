@@ -7,6 +7,7 @@ import { type Address } from "viem";
 import { useAccount } from "wagmi";
 import { useSiweAuth } from "@/lib/hooks/useSiweAuth";
 import { useSession } from "@/lib/hooks/useSession";
+import { useConnectSignInLoading } from "@/lib/hooks/useConnectSignInLoading";
 import {
   useWalletVerification,
   type WalletVerificationStatus,
@@ -44,7 +45,6 @@ function WalletStatusCard({
   isHero: boolean;
 }) {
   const cardClass = isHero ? "card-paper" : "card";
-  const hintClass = isHero ? "text-black/70" : "text-foreground/70";
   const addressClass = isHero ? "text-black" : "text-foreground";
 
   return (
@@ -59,13 +59,6 @@ function WalletStatusCard({
         </p>
         {verificationStatus === "isWhitelistedRoot" && <VerifiedBadge />}
       </div>
-
-      {verificationStatus === "loading" && (
-        <p className={`text-xs ${hintClass} flex items-center gap-2`}>
-          <InlineSpinner className={isHero ? "border-black/30 border-t-black" : "border-foreground/30 border-t-foreground"} />
-          {copy.auth.checkingVerification}
-        </p>
-      )}
 
       {displayAddress ? (
         <CopyAddress address={displayAddress} nested size="lg" />
@@ -122,7 +115,13 @@ export function ConnectSignIn({
     rootAddress &&
     address.toLowerCase() === rootAddress.toLowerCase();
 
+  const isHero = variant === "hero";
   const canSignIn = verificationStatus === "isWhitelistedRoot";
+  const connectLoading = useConnectSignInLoading(
+    isHero,
+    verificationStatus,
+    checked && !authenticated && !isFinalizingSignIn,
+  );
 
   async function goToDashboard() {
     if (onSuccess) {
@@ -145,7 +144,6 @@ export function ConnectSignIn({
     }
   }
 
-  const isHero = variant === "hero";
   const primaryBtn = "btn-primary";
   const secondaryBtn = isHero ? "btn-hero-secondary" : "btn-secondary";
   const ghostBtn = isHero ? "btn-hero-secondary" : "btn-ghost";
@@ -220,6 +218,10 @@ export function ConnectSignIn({
         }) => {
           const ready = mounted;
           const connected = ready && account && chain;
+
+          if (connectLoading) {
+            return <LoadingSpinner label={copy.auth.checkingVerification} />;
+          }
 
           return (
             <div

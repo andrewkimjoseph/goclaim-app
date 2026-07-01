@@ -14,7 +14,6 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { StreakModal } from "@/components/StreakCard";
 import { SignOutConfirmModal } from "@/components/SignOutConfirmModal";
-import { SetupDashboardSkeleton } from "@/components/DashboardSkeleton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAgentStatus, UnauthorizedError } from "@/lib/hooks/useAgentStatus";
 import { useSession } from "@/lib/hooks/useSession";
@@ -114,12 +113,18 @@ export default function DashboardPage() {
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
   const showNoAgentSetup = Boolean(status && !status.hasAgent && !showError);
   const isInitialStatusLoad = isLoading && !status;
-  const useSetupLayout = showNoAgentSetup || isInitialStatusLoad;
+  const useSetupLayout = showNoAgentSetup;
 
-  if (!checked || !authenticated) {
+  if (!checked || !authenticated || isInitialStatusLoad) {
     return (
       <div className="app-shell items-center justify-center">
-        <LoadingSpinner label={copy.auth.checkingSession} />
+        <LoadingSpinner
+          label={
+            !checked || !authenticated
+              ? copy.auth.checkingSession
+              : copy.dashboard.loading
+          }
+        />
       </div>
     );
   }
@@ -127,7 +132,7 @@ export default function DashboardPage() {
   return (
     <div className="app-shell app-shell-pinned">
       <header
-        className="header-bar shrink-0"
+        className="header-bar"
         style={{ viewTransitionName: "site-header" }}
       >
         <Link href="/dashboard">
@@ -149,9 +154,7 @@ export default function DashboardPage() {
             : "app-shell-scroll py-6 space-y-4"
         }
       >
-        {isInitialStatusLoad ? (
-          <SetupDashboardSkeleton />
-        ) : showError ? (
+        {showError ? (
           <div className="flex flex-col items-center justify-center gap-4 py-12">
             <p className="text-red-200 text-center">
               {error?.message ?? "Something went wrong"}

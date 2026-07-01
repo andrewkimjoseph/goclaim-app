@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ClaimHistoryTable } from "@/components/ClaimHistoryTable";
-import { HistorySkeleton } from "@/components/DashboardSkeleton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAgentStatus, UnauthorizedError } from "@/lib/hooks/useAgentStatus";
 import { useSession } from "@/lib/hooks/useSession";
@@ -31,17 +30,24 @@ export default function HistoryPage() {
   }, [error, router]);
 
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
+  const isInitialLoad = isLoading && !status;
 
-  if (!checked || !authenticated) {
+  if (!checked || !authenticated || isInitialLoad) {
     return (
       <div className="app-shell items-center justify-center">
-        <LoadingSpinner label={copy.auth.checkingSession} />
+        <LoadingSpinner
+          label={
+            !checked || !authenticated
+              ? copy.auth.checkingSession
+              : copy.dashboard.loading
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="app-shell pb-6">
+    <div className="app-shell app-shell-pinned">
       <header className="header-bar" style={{ viewTransitionName: "site-header" }}>
         <Link href="/dashboard" transitionTypes={["nav-back"]}>
           <BrandLogo size="nav" />
@@ -55,7 +61,7 @@ export default function HistoryPage() {
         </Link>
       </header>
 
-      <main className="flex-1 py-6 space-y-4">
+      <main className="app-shell-scroll py-6 space-y-4">
         <div className="space-y-1">
           <h1 className="font-display font-extrabold text-3xl text-white tracking-tight">
             {copy.goClaimHistory.title}
@@ -70,9 +76,7 @@ export default function HistoryPage() {
           )}
         </div>
 
-        {isLoading && !status ? (
-          <HistorySkeleton />
-        ) : showError ? (
+        {showError ? (
           <div className="flex flex-col items-center justify-center gap-4 py-12">
             <p className="text-red-200 text-center">
               {error?.message ?? "Something went wrong"}

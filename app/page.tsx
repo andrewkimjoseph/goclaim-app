@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -11,22 +12,32 @@ import { copy } from "@/lib/copy";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { checked } = useSession();
+  const { checked, authenticated } = useSession();
+
+  useEffect(() => {
+    if (checked && authenticated) {
+      router.replace("/dashboard");
+    }
+  }, [checked, authenticated, router]);
 
   function handleSuccess() {
     router.push("/dashboard");
   }
 
-  if (!checked) {
+  if (!checked || authenticated) {
     return (
       <div className="app-shell items-center justify-center">
-        <LoadingSpinner label={copy.auth.checkingSession} />
+        <LoadingSpinner
+          label={
+            authenticated ? copy.auth.openingDashboard : copy.auth.checkingSession
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="app-shell pb-4 min-h-screen">
+    <div className="app-shell app-shell-pinned">
       <header className="header-bar" style={{ viewTransitionName: "site-header" }}>
         <Link href="/">
           <BrandLogo size="nav" priority />
@@ -40,8 +51,8 @@ export default function LandingPage() {
         </Link>
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 flex flex-col items-center justify-center py-8">
+      <main className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col items-center justify-center py-8">
           <GettingStartedHero
             headline={copy.landing.headline}
             subhead={copy.landing.subhead}
@@ -49,7 +60,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="w-full pb-2">
+        <div className="shrink-0 pb-2 w-full">
           <ConnectSignIn onSuccess={handleSuccess} variant="hero" />
         </div>
       </main>

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function FaqsPage() {
   return (
-    <div className="app-shell pb-6 min-h-screen">
+    <div className="app-shell app-shell-pinned">
       <FaqHeaderNav />
 
-      <main className="flex-1 py-6 space-y-4">
+      <main className="app-shell-scroll py-6 space-y-4">
         <div className="space-y-1">
           <h1 className="font-display font-extrabold text-3xl text-white tracking-tight">
             {copy.faqs.title}

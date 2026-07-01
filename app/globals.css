@@ -26,7 +26,7 @@
   }
 
   .header-bar {
-    @apply py-4 flex items-center justify-between border-b-2 border-accent;
+    @apply py-4 flex items-center justify-between border-b-2 border-accent shrink-0 bg-shell;
   }
 
   .btn-primary {
