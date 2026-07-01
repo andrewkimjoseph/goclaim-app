@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { formatClaimStatus } from "@/lib/formatClaimStatus";
-import { copy, formatClaimSchedule } from "@/lib/copy";
+import { copy } from "@/lib/copy";
 
 export type ClaimLog = {
   id: string;
@@ -108,7 +108,6 @@ export function ClaimHistoryTable({
   limit,
   viewAllHref,
 }: ClaimHistoryTableProps) {
-  const [claimSchedule] = useState(() => formatClaimSchedule());
   const isPreview = limit !== undefined || viewAllHref !== undefined;
   const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
   const showViewAll = viewAllHref !== undefined && logs.length > 1;
@@ -126,8 +125,8 @@ export function ClaimHistoryTable({
             {copy.goClaimHistory.title}
           </h3>
         )}
-        <p className="text-center text-foreground/60 text-sm">
-          {copy.goClaimHistory.empty(claimSchedule)}
+        <p className="text-left text-foreground/60 text-sm">
+          {copy.goClaimHistory.empty}
         </p>
       </div>
     );
