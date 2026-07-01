@@ -3,7 +3,7 @@ import { copy } from "@/lib/copy";
 export function SetupPreviewSteps() {
   return (
     <div className="card w-full text-left p-5">
-      <h3 className="font-display font-bold text-sm mb-4">
+      <h3 className="font-display font-bold text-xl mb-4">
         {copy.dashboard.setupStepsTitle}
       </h3>
       <ul className="space-y-4">
