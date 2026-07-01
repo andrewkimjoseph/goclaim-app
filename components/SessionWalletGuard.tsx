@@ -7,12 +7,35 @@ import { useSession } from "@/lib/hooks/useSession";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { copy } from "@/lib/copy";
 
+const LOGOUT_TIMEOUT_MS = 5_000;
+
+async function postLogoutWithTimeout() {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), LOGOUT_TIMEOUT_MS);
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 export function SessionWalletGuard() {
   const router = useRouter();
-  const { authenticated, rootAddress, checked, refresh } = useSession();
+  const { authenticated, rootAddress, checked, clearSession } = useSession();
   const { address, isConnected, isReconnecting, isConnecting } = useAccount();
   const [signingOut, setSigningOut] = useState(false);
   const hasFired = useRef(false);
+
+  useEffect(() => {
+    if (checked && !authenticated) {
+      hasFired.current = false;
+      setSigningOut(false);
+    }
+  }, [checked, authenticated]);
 
   useEffect(() => {
     if (hasFired.current) return;
@@ -26,15 +49,14 @@ export function SessionWalletGuard() {
 
     (async () => {
       try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          credentials: "include",
-        });
+        await postLogoutWithTimeout();
       } catch {
         // best-effort: still clear client session and redirect
+      } finally {
+        clearSession();
+        router.replace("/");
+        setSigningOut(false);
       }
-      await refresh();
-      router.replace("/");
     })();
   }, [
     checked,
@@ -44,14 +66,14 @@ export function SessionWalletGuard() {
     isConnected,
     isReconnecting,
     isConnecting,
-    refresh,
+    clearSession,
     router,
   ]);
 
   if (!signingOut) return null;
 
   return (
-    <div className="app-shell items-center justify-center fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-shell">
       <LoadingSpinner label={copy.auth.walletChangedSigningOut} />
     </div>
   );
