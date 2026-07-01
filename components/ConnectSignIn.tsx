@@ -12,7 +12,7 @@ import {
   type WalletVerificationStatus,
 } from "@/lib/hooks/useWalletVerification";
 import { copy } from "@/lib/copy";
-import { truncateAddress } from "@/lib/formatAddress";
+import { CopyAddress } from "@/components/CopyAddress";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 
@@ -67,12 +67,15 @@ function WalletStatusCard({
         </p>
       )}
 
-      <p
-        className={`font-display font-bold text-lg truncate min-w-0 ${addressClass}`}
-        title={displayAddress}
-      >
-        {displayAddress ? truncateAddress(displayAddress) : accountName}
-      </p>
+      {displayAddress ? (
+        <CopyAddress address={displayAddress} nested size="lg" />
+      ) : (
+        <p
+          className={`font-display font-bold text-base tracking-tight w-full min-w-0 whitespace-nowrap overflow-hidden ${addressClass}`}
+        >
+          {accountName}
+        </p>
+      )}
 
       {verificationStatus === "isLinkedWallet" && (
         <p className={`text-xs ${isHero ? "text-red-700" : "text-red-600"}`}>

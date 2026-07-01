@@ -8,9 +8,16 @@ type CopyAddressProps = {
   hint?: string;
   /** Compact row for use inside another card (no outer card chrome). */
   nested?: boolean;
+  size?: "sm" | "lg";
 };
 
-export function CopyAddress({ address, label, hint, nested }: CopyAddressProps) {
+export function CopyAddress({
+  address,
+  label,
+  hint,
+  nested,
+  size = "sm",
+}: CopyAddressProps) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -19,17 +26,26 @@ export function CopyAddress({ address, label, hint, nested }: CopyAddressProps) 
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const addressClass =
+    size === "lg"
+      ? "text-base font-mono font-bold"
+      : "text-xs font-mono font-bold";
+  const buttonClass =
+    size === "lg"
+      ? "text-sm font-display font-semibold px-2.5 py-1.5"
+      : "text-xs font-display font-semibold px-2 py-1";
+
   const row = (
     <div className="flex items-center gap-3 min-w-0">
       <code
-        className="flex-1 min-w-0 text-xs font-mono font-bold text-foreground leading-none whitespace-nowrap overflow-hidden"
+        className={`flex-1 min-w-0 ${addressClass} text-foreground leading-none whitespace-nowrap overflow-hidden`}
         title={address}
       >
         {address}
       </code>
       <button
         onClick={copy}
-        className="shrink-0 text-xs font-display font-semibold text-foreground hover:brightness-110 border-2 border-black px-2 py-1 rounded-brutal shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        className={`shrink-0 ${buttonClass} text-foreground hover:brightness-110 border-2 border-black rounded-brutal shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none`}
       >
         {copied ? "Copied!" : "Copy"}
       </button>
