@@ -105,7 +105,7 @@ See `prisma/schema.prisma` for the full schema.
 |-------|------|---------|
 | `GET /api/auth/nonce` | — | Issue SIWE nonce |
 | `POST /api/auth/verify` | — | Verify SIWE signature, set session |
-| `GET /api/auth/session` | cookie | Current session |
+| `GET /api/auth/session` | cookie | Current session (`200` + `authenticated: false` when logged out) |
 | `POST /api/auth/logout` | cookie | Clear session |
 | `POST /api/agent/create` | JWT | Create or return smart account |
 | `GET /api/agent/status` | JWT | Dashboard state + claim history |
