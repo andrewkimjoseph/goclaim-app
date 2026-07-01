@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { type Address } from "viem";
@@ -98,6 +98,7 @@ export function ConnectSignIn({
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isFinalizingSignIn, setIsFinalizingSignIn] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const finalizingRef = useRef(false);
 
   const displayAddress = walletAddress ?? address;
   const verificationAddress = walletAddress as Address | undefined;
@@ -111,6 +112,7 @@ export function ConnectSignIn({
   useEffect(() => {
     setVerificationError(null);
     setIsGeneratingLink(false);
+    finalizingRef.current = false;
     setIsFinalizingSignIn(false);
   }, [walletAddress]);
 
@@ -149,8 +151,16 @@ export function ConnectSignIn({
   const ghostBtn = isHero ? "btn-hero-secondary" : "btn-ghost";
   const hintErrorClass = isHero ? "text-red-200" : "text-red-600";
 
-  if (!checked) {
-    return <LoadingSpinner label={copy.auth.checkingSession} />;
+  if (!checked || isFinalizingSignIn || finalizingRef.current) {
+    return (
+      <LoadingSpinner
+        label={
+          isFinalizingSignIn || finalizingRef.current
+            ? copy.auth.openingDashboard
+            : copy.auth.checkingSession
+        }
+      />
+    );
   }
 
   if (authenticated) {
@@ -259,12 +269,20 @@ export function ConnectSignIn({
                       disabled={isLoading || isFinalizingSignIn}
                       onClick={async () => {
                         const ok = await signIn();
-                        if (ok) {
-                          setIsFinalizingSignIn(true);
-                          try {
-                            await refresh();
-                            if (onSuccess) onSuccess();
-                          } finally {
+                        if (!ok) return;
+
+                        finalizingRef.current = true;
+                        setIsFinalizingSignIn(true);
+                        try {
+                          await refresh();
+                          if (onSuccess) {
+                            onSuccess();
+                            return;
+                          }
+                          await goToDashboard();
+                        } finally {
+                          if (!onSuccess) {
+                            finalizingRef.current = false;
                             setIsFinalizingSignIn(false);
                           }
                         }

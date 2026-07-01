@@ -64,7 +64,7 @@ export const copy = {
       bodyLinked: "Daily GoClaims enabled.",
       bodyPending: "Finish step 2.",
     },
-    goToDashboard: "Dashboard",
+    goToDashboard: "See Dashboard",
   },
   connect: {
     cta: "Link smart account to GoodDollar",

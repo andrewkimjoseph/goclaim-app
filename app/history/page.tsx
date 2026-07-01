@@ -6,22 +6,23 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ClaimHistoryTable } from "@/components/ClaimHistoryTable";
 import { HistorySkeleton } from "@/components/DashboardSkeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAgentStatus, UnauthorizedError } from "@/lib/hooks/useAgentStatus";
 import { useSession } from "@/lib/hooks/useSession";
 import { copy } from "@/lib/copy";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { authenticated, checked } = useSession();
+  const { authenticated, checked, refresh } = useSession();
   const { data: status, isLoading, error, refetch } = useAgentStatus(100, {
     enabled: checked && authenticated,
   });
 
   useEffect(() => {
     if (checked && !authenticated) {
-      router.push("/");
+      void refresh();
     }
-  }, [checked, authenticated, router]);
+  }, [checked, authenticated, refresh]);
 
   useEffect(() => {
     if (error instanceof UnauthorizedError) {
@@ -30,6 +31,14 @@ export default function HistoryPage() {
   }, [error, router]);
 
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
+
+  if (!checked || !authenticated) {
+    return (
+      <div className="app-shell items-center justify-center">
+        <LoadingSpinner label={copy.auth.checkingSession} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell pb-6">

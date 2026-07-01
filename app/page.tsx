@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -12,22 +11,16 @@ import { copy } from "@/lib/copy";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { authenticated, checked } = useSession();
-
-  useEffect(() => {
-    if (checked && authenticated) {
-      router.replace("/dashboard");
-    }
-  }, [checked, authenticated, router]);
+  const { checked } = useSession();
 
   function handleSuccess() {
     router.push("/dashboard");
   }
 
-  if (checked && authenticated) {
+  if (!checked) {
     return (
       <div className="app-shell items-center justify-center">
-        <LoadingSpinner label={copy.auth.openingDashboard} />
+        <LoadingSpinner label={copy.auth.checkingSession} />
       </div>
     );
   }

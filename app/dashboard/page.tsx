@@ -14,7 +14,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { SetupChecklist } from "@/components/SetupChecklist";
 import { StreakModal } from "@/components/StreakCard";
 import { SignOutConfirmModal } from "@/components/SignOutConfirmModal";
-import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { SetupDashboardSkeleton } from "@/components/DashboardSkeleton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAgentStatus, UnauthorizedError } from "@/lib/hooks/useAgentStatus";
 import { useSession } from "@/lib/hooks/useSession";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const autoOnboardingShown = useRef(false);
   const [claimSchedule] = useState(() => formatClaimSchedule());
 
-  const { authenticated, checked, clearSession } = useSession();
+  const { authenticated, checked, clearSession, refresh } = useSession();
   const { data: status, isLoading, error, refetch } = useAgentStatus(2, {
     enabled: checked && authenticated,
   });
@@ -49,9 +49,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (checked && !authenticated) {
-      router.replace("/");
+      void refresh();
     }
-  }, [checked, authenticated, router]);
+  }, [checked, authenticated, refresh]);
 
   useEffect(() => {
     if (error instanceof UnauthorizedError) {
@@ -72,7 +72,7 @@ export default function DashboardPage() {
     }
   }, [simpleSmartAccount, linkComplete]);
 
-  const showOnboardingModal = showOnboarding && !linkComplete;
+  const showOnboardingModal = showOnboarding;
 
   async function confirmSignOut() {
     setSigningOut(true);
@@ -113,8 +113,16 @@ export default function DashboardPage() {
   const linkStatus = status?.linkStatus ?? "pending";
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
   const showNoAgentSetup = Boolean(status && !status.hasAgent && !showError);
+  const isInitialStatusLoad = isLoading && !status;
+  const useSetupLayout = showNoAgentSetup || isInitialStatusLoad;
 
-  if (checked && !authenticated) return null;
+  if (!checked || !authenticated) {
+    return (
+      <div className="app-shell items-center justify-center">
+        <LoadingSpinner label={copy.auth.checkingSession} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell app-shell-pinned">
@@ -122,7 +130,7 @@ export default function DashboardPage() {
         className="header-bar shrink-0"
         style={{ viewTransitionName: "site-header" }}
       >
-        <Link href="/">
+        <Link href="/dashboard">
           <BrandLogo size="nav" />
         </Link>
         <Link
@@ -136,13 +144,13 @@ export default function DashboardPage() {
 
       <main
         className={
-          showNoAgentSetup
+          useSetupLayout
             ? "flex-1 min-h-0 flex flex-col"
             : "app-shell-scroll py-6 space-y-4"
         }
       >
-        {isLoading && !status ? (
-          <DashboardSkeleton />
+        {isInitialStatusLoad ? (
+          <SetupDashboardSkeleton />
         ) : showError ? (
           <div className="flex flex-col items-center justify-center gap-4 py-12">
             <p className="text-red-200 text-center">
