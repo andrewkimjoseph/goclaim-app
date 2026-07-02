@@ -200,9 +200,9 @@ export function ConnectSignIn({
     sdkReady;
 
   const getVerifiedLabel = isGeneratingLink
-    ? copy.auth.preparingVerification
+    ? copy.auth.confirmInWallet
     : isRedirecting
-      ? copy.auth.redirectingVerification
+      ? copy.auth.signing
       : copy.auth.getVerified;
 
   return (

@@ -42,8 +42,8 @@ export const copy = {
     checkingVerification: "Checking verification…",
     verifiedBadge: "Verified",
     getVerified: "Get verified",
-    preparingVerification: "Preparing…",
-    redirectingVerification: "Redirecting…",
+    confirmInWallet: "Confirm in wallet",
+    signing: "Signing",
     linkedWalletHint:
       "Linked to another identity. Switch to your verified wallet.",
     walletChangedSigningOut: "Wallet changed - signing you out...",
