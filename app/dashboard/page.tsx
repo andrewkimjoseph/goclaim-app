@@ -150,7 +150,7 @@ export default function DashboardPage() {
       <main
         className={
           useSetupLayout
-            ? "flex-1 min-h-0 flex flex-col"
+            ? "flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain"
             : "app-shell-scroll py-6 space-y-4"
         }
       >
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                 <SetupPreviewSteps />
               </GettingStartedHero>
             </div>
-            <div className="shrink-0 pb-2">
+            <div className="shrink-0 pb-2 pt-4">
               <button
                 onClick={handleSetupGoClaim}
                 disabled={isCreatingAgent}

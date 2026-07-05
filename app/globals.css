@@ -14,7 +14,7 @@
   }
 
   .app-shell-pinned {
-    @apply h-dvh max-h-dvh overflow-hidden;
+    @apply flex flex-col min-h-svh h-svh max-h-svh;
   }
 
   .app-shell-scroll {
@@ -22,7 +22,7 @@
   }
 
   .app-shell-footer {
-    @apply shrink-0 bg-shell pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))];
+    @apply shrink-0 bg-shell pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] z-10;
   }
 
   .header-bar {
