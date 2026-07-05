@@ -4,14 +4,14 @@ import { privateKeyToAccount } from "viem/accounts";
 import { toSimpleSmartAccount } from "permissionless/accounts";
 import { publicClient } from "./config";
 
-export type SmartAccountResult = {
+export type DerivedGoClaimAccount = {
   eoaAddress: Hex;
-  smartAccountAddress: Hex;
+  goClaimAccountAddress: Hex;
 };
 
-export async function createSmartAccount(
+export async function deriveGoClaimAccount(
   privateKeyHex: Hex
-): Promise<SmartAccountResult> {
+): Promise<DerivedGoClaimAccount> {
   const eoaAccount = privateKeyToAccount(privateKeyHex);
 
   const smartAccount = await toSimpleSmartAccount({
@@ -25,6 +25,6 @@ export async function createSmartAccount(
 
   return {
     eoaAddress: eoaAccount.address,
-    smartAccountAddress: smartAccount.address,
+    goClaimAccountAddress: smartAccount.address,
   };
 }

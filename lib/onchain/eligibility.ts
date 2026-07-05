@@ -3,11 +3,11 @@ import { identityAbi } from "./abis/identity";
 import { ubiSchemeAbi } from "./abis/ubiScheme";
 import { IDENTITY_PROXY_ADDRESS, UBI_SCHEME_PROXY_ADDRESS } from "./constants";
 import { publicClient } from "./config";
-import { createSmartAccount } from "./createSmartAccount";
+import { deriveGoClaimAccount } from "./deriveGoClaimAccount";
 
 type EligibilityBase = {
   eoaAddress: Hex;
-  smartAccountAddress: Hex;
+  goClaimAccountAddress: Hex;
   whitelistedRoot: Hex;
 };
 
@@ -20,19 +20,19 @@ export type UbiClaimEligibility =
 export async function checkUbiClaimEligibility(
   privateKeyHex: Hex
 ): Promise<UbiClaimEligibility> {
-  const { eoaAddress, smartAccountAddress } =
-    await createSmartAccount(privateKeyHex);
+  const { eoaAddress, goClaimAccountAddress } =
+    await deriveGoClaimAccount(privateKeyHex);
 
   const whitelistedRoot = await publicClient.readContract({
     address: IDENTITY_PROXY_ADDRESS,
     abi: identityAbi,
     functionName: "getWhitelistedRoot",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 
   const base: EligibilityBase = {
     eoaAddress,
-    smartAccountAddress,
+    goClaimAccountAddress,
     whitelistedRoot,
   };
 
@@ -79,7 +79,7 @@ export async function checkUbiClaimEligibility(
 }
 
 export async function getLinkStatus(
-  smartAccountAddress: Hex,
+  goClaimAccountAddress: Hex,
   rootAddress: Hex
 ): Promise<{
   isWhitelisted: boolean;
@@ -90,7 +90,7 @@ export async function getLinkStatus(
     address: IDENTITY_PROXY_ADDRESS,
     abi: identityAbi,
     functionName: "getWhitelistedRoot",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 
   const isWhitelisted = whitelistedRoot !== zeroAddress;

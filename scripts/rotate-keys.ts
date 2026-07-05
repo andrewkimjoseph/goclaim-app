@@ -47,7 +47,7 @@ async function main() {
   }
 
   const prisma = new PrismaClient();
-  const wallets = await prisma.agentWallet.findMany();
+  const wallets = await prisma.goClaimWallet.findMany();
 
   for (const wallet of wallets) {
     const privateKey = decryptWithKey(
@@ -56,7 +56,7 @@ async function main() {
       oldKey
     );
     const { encrypted, iv } = encryptWithKey(privateKey, newKey);
-    await prisma.agentWallet.update({
+    await prisma.goClaimWallet.update({
       where: { id: wallet.id },
       data: {
         encryptedPrivateKey: encrypted,
@@ -66,7 +66,7 @@ async function main() {
     });
   }
 
-  console.log(`Rotated ${wallets.length} agent keys`);
+  console.log(`Rotated ${wallets.length} GoClaim wallet keys`);
   await prisma.$disconnect();
 }
 

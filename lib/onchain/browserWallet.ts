@@ -10,7 +10,7 @@ import { config } from "@/lib/wagmi";
 import {
   encodeTaggedConnectAccount,
   IDENTITY_CONNECT_TARGET,
-} from "./connectAgent";
+} from "./identityConnect";
 
 const drpcKey = process.env.NEXT_PUBLIC_DRPC_API_KEY;
 
@@ -21,10 +21,10 @@ export const browserPublicClient = createPublicClient({
 
 export async function sendTaggedConnectAccount({
   account,
-  smartAccountAddress,
+  goClaimAccountAddress,
 }: {
   account: Address;
-  smartAccountAddress: Address;
+  goClaimAccountAddress: Address;
 }): Promise<Hash> {
   const walletClient = await getWalletClient(config, { chainId: celo.id });
   if (!walletClient) {
@@ -34,6 +34,6 @@ export async function sendTaggedConnectAccount({
   return walletClient.sendTransaction({
     account,
     to: IDENTITY_CONNECT_TARGET,
-    data: encodeTaggedConnectAccount(smartAccountAddress),
+    data: encodeTaggedConnectAccount(goClaimAccountAddress),
   });
 }

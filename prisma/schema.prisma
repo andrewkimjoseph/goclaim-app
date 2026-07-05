@@ -11,24 +11,24 @@ model User {
   id                 String              @id @default(cuid())
   rootAddress        String              @unique
   createdAt          DateTime            @default(now())
-  agentWallet        AgentWallet?
+  goClaimWallet      GoClaimWallet?
   claimLogs          ClaimLog[]
   transferLogs       TransferLog[]
   connectAccountLog  ConnectAccountLog?
 }
 
-model AgentWallet {
-  id                  String    @id @default(cuid())
-  userId              String    @unique
-  user                User      @relation(fields: [userId], references: [id])
-  smartAccountAddress String    @unique
-  eoaAddress          String
-  encryptedPrivateKey String
-  iv                  String
-  keyVersion          String    @default("v1")
-  createdAt           DateTime  @default(now())
-  lastClaimedAt       DateTime?
-  isActive            Boolean   @default(true)
+model GoClaimWallet {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
+  goClaimAccountAddress String    @unique
+  eoaAddress            String
+  encryptedPrivateKey   String
+  iv                    String
+  keyVersion            String    @default("v1")
+  createdAt             DateTime  @default(now())
+  lastClaimedAt         DateTime?
+  isActive              Boolean   @default(true)
 }
 
 model ClaimLog {
@@ -57,13 +57,13 @@ model TransferLog {
 }
 
 model ConnectAccountLog {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  user                User     @relation(fields: [userId], references: [id])
-  smartAccountAddress String
-  rootAddress         String
-  txHash              String   @unique
-  connectedAt         DateTime @default(now())
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  goClaimAccountAddress String
+  rootAddress           String
+  txHash                String   @unique
+  connectedAt           DateTime @default(now())
 }
 
 model Nonce {

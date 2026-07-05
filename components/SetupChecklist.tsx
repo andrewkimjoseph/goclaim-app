@@ -28,7 +28,7 @@ export function SetupChecklist({
         <li className="flex items-center gap-3">
           <span className="step-badge-todo shrink-0">2</span>
           <span className="text-sm text-foreground/80">
-            {copy.setupChecklist.linkSmartAccount}
+            {copy.setupChecklist.linkGoClaimAccount}
           </span>
         </li>
         <li className="flex items-center gap-3">

@@ -6,18 +6,18 @@ import { copy } from "@/lib/copy";
 
 type AddressesCardProps = {
   rootAddress?: string;
-  smartAccountAddress?: string;
+  goClaimAccountAddress?: string;
 };
 
 export function AddressesCard({
   rootAddress,
-  smartAccountAddress,
+  goClaimAccountAddress,
 }: AddressesCardProps) {
   const [open, setOpen] = useState(false);
   const buttonId = useId();
   const panelId = useId();
 
-  if (!rootAddress && !smartAccountAddress) return null;
+  if (!rootAddress && !goClaimAccountAddress) return null;
 
   return (
     <div className="card">
@@ -59,16 +59,16 @@ export function AddressesCard({
               </div>
             )}
 
-            {rootAddress && smartAccountAddress && (
+            {rootAddress && goClaimAccountAddress && (
               <div className="border-t-2 border-black" />
             )}
 
-            {smartAccountAddress && (
+            {goClaimAccountAddress && (
               <div>
                 <p className="text-xs font-display font-semibold text-shell mb-3">
-                  {copy.dashboard.smartAccountLabel}
+                  {copy.dashboard.goClaimAccountLabel}
                 </p>
-                <CopyAddress address={smartAccountAddress} nested />
+                <CopyAddress address={goClaimAccountAddress} nested />
               </div>
             )}
           </div>

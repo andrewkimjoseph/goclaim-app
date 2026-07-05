@@ -10,12 +10,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const agents = await prisma.agentWallet.findMany({
+  const activeWallets = await prisma.goClaimWallet.findMany({
     where: { isActive: true },
     select: { userId: true },
   });
 
-  const userIds = agents.map((a) => a.userId);
+  const userIds = activeWallets.map((w) => w.userId);
 
   if (userIds.length === 0) {
     return NextResponse.json({ enqueued: 0, waves: 0 });

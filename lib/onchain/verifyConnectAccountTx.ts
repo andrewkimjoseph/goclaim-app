@@ -17,22 +17,22 @@ function isTransactionNotFoundError(error: unknown): boolean {
 
 export async function assertConnectAccountLinked(
   rootAddress: Address,
-  smartAccountAddress: Address
+  goClaimAccountAddress: Address
 ): Promise<void> {
-  const link = await getLinkStatus(smartAccountAddress, rootAddress);
+  const link = await getLinkStatus(goClaimAccountAddress, rootAddress);
   if (!link.linkComplete) {
-    throw new Error("Smart account is not linked to user root on-chain");
+    throw new Error("GoClaim account is not linked to user root on-chain");
   }
 }
 
 async function verifyConnectAccountTxDetails({
   txHash,
   rootAddress,
-  smartAccountAddress,
+  goClaimAccountAddress,
 }: {
   txHash: Hash;
   rootAddress: Address;
-  smartAccountAddress: Address;
+  goClaimAccountAddress: Address;
 }): Promise<void> {
   let receipt;
   try {
@@ -73,24 +73,24 @@ async function verifyConnectAccountTxDetails({
   }
 
   const [accountArg] = decoded.args as [Address];
-  if (accountArg.toLowerCase() !== smartAccountAddress.toLowerCase()) {
-    throw new Error("connectAccount target does not match agent smart account");
+  if (accountArg.toLowerCase() !== goClaimAccountAddress.toLowerCase()) {
+    throw new Error("connectAccount target does not match GoClaim account");
   }
 }
 
 export async function verifyConnectAccountTx({
   txHash,
   rootAddress,
-  smartAccountAddress,
+  goClaimAccountAddress,
 }: {
   txHash: Hash;
   rootAddress: Address;
-  smartAccountAddress: Address;
+  goClaimAccountAddress: Address;
 }): Promise<void> {
-  await assertConnectAccountLinked(rootAddress, smartAccountAddress);
+  await assertConnectAccountLinked(rootAddress, goClaimAccountAddress);
   await verifyConnectAccountTxDetails({
     txHash,
     rootAddress,
-    smartAccountAddress,
+    goClaimAccountAddress,
   });
 }

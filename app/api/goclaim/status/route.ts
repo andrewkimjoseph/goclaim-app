@@ -3,7 +3,7 @@ import { type Address } from "viem";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLinkStatus } from "@/lib/onchain/eligibility";
-import { resolveAgentAddresses } from "@/lib/onchain/resolveAgentAddresses";
+import { resolveGoClaimAccount } from "@/lib/onchain/resolveGoClaimAccount";
 import { publicClient } from "@/lib/onchain/config";
 import { formatEntitlementGd, formatGdAmountWhole } from "@/lib/onchain/claimUbi";
 import { getRootGdBalance } from "@/lib/onchain/getRootGdBalance";
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     include: {
-      agentWallet: true,
+      goClaimWallet: true,
       claimLogs: {
         orderBy: { claimedAt: "desc" },
         take: claimLogsLimit,
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  if (!user.agentWallet) {
+  if (!user.goClaimWallet) {
     let rootGdBalance: string | null = null;
     try {
       rootGdBalance = await getRootGdBalance(user.rootAddress as Address);
@@ -67,17 +67,16 @@ export async function GET(request: NextRequest) {
       rootGdBalance = null;
     }
     return NextResponse.json({
-      hasAgent: false,
+      hasGoClaimAccount: false,
       rootAddress: user.rootAddress,
       rootGdBalance,
     });
   }
 
-  // Wave 1 — all independent once the user is known
   const [rootGdBalance, resolved, successfulClaims, transfers] =
     await Promise.all([
       getRootGdBalance(user.rootAddress as Address).catch(() => null),
-      resolveAgentAddresses(session.userId),
+      resolveGoClaimAccount(session.userId),
       prisma.claimLog.findMany({
         where: { userId: user.id, status: "success" },
         select: { claimedAt: true },
@@ -89,17 +88,16 @@ export async function GET(request: NextRequest) {
     ]);
 
   if (!resolved) {
-    return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    return NextResponse.json({ error: "GoClaim account not found" }, { status: 404 });
   }
 
-  const simpleSmartAccountAddress = resolved.smartAccountAddress;
+  const goClaimAccountAddress = resolved.goClaimAccountAddress;
 
-  // Wave 2 — both depend on the resolved smart account address
-  const [link, saBytecode] = await Promise.all([
-    getLinkStatus(simpleSmartAccountAddress, user.rootAddress as Address),
-    publicClient.getBytecode({ address: simpleSmartAccountAddress }),
+  const [link, accountBytecode] = await Promise.all([
+    getLinkStatus(goClaimAccountAddress, user.rootAddress as Address),
+    publicClient.getCode({ address: goClaimAccountAddress }),
   ]);
-  const isDeployed = Boolean(saBytecode && saBytecode !== "0x");
+  const isDeployed = Boolean(accountBytecode && accountBytecode !== "0x");
 
   const claimStreak = computeClaimStreak(
     successfulClaims.map((c) => c.claimedAt),
@@ -112,15 +110,12 @@ export async function GET(request: NextRequest) {
   );
 
   return NextResponse.json({
-    hasAgent: true,
+    hasGoClaimAccount: true,
     rootAddress: user.rootAddress,
-    /** ERC-4337 simple smart account — the connectAccount target and claim sender */
-    simpleSmartAccountAddress,
-    /** @deprecated use simpleSmartAccountAddress */
-    smartAccountAddress: simpleSmartAccountAddress,
+    goClaimAccountAddress,
     isCounterfactual: !isDeployed,
-    isActive: user.agentWallet.isActive,
-    lastClaimedAt: user.agentWallet.lastClaimedAt,
+    isActive: user.goClaimWallet.isActive,
+    lastClaimedAt: user.goClaimWallet.lastClaimedAt,
     linkStatus: link.linkComplete
       ? "active"
       : link.isWhitelisted

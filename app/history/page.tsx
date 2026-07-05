@@ -66,7 +66,7 @@ export default function HistoryPage() {
           <h1 className="font-display font-extrabold text-3xl text-white tracking-tight">
             {copy.goClaimHistory.title}
           </h1>
-          {status?.hasAgent && !isLoading && (
+          {status?.hasGoClaimAccount && !isLoading && (
             <p className="text-sm text-white/80">
               {copy.goClaimHistory.pageSummary(
                 status.lifetimeClaims ?? 0,
@@ -85,9 +85,9 @@ export default function HistoryPage() {
               {copy.dashboard.retry}
             </button>
           </div>
-        ) : !status?.hasAgent ? (
+        ) : !status?.hasGoClaimAccount ? (
           <div className="flex flex-col items-center justify-center gap-4 py-12">
-            <p className="text-white/80 text-center">{copy.dashboard.noAgent}</p>
+            <p className="text-white/80 text-center">{copy.dashboard.noGoClaimAccount}</p>
             <Link
               href="/dashboard"
               transitionTypes={["nav-back"]}

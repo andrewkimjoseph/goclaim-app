@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
+  const [isCreatingGoClaimAccount, setIsCreatingGoClaimAccount] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const autoOnboardingShown = useRef(false);
   const [claimSchedule] = useState(() => formatClaimSchedule());
@@ -58,18 +58,17 @@ export default function DashboardPage() {
     }
   }, [error, router]);
 
-  const simpleSmartAccount =
-    status?.simpleSmartAccountAddress ?? status?.smartAccountAddress;
+  const goClaimAccountAddress = status?.goClaimAccountAddress;
   const linkComplete = status?.linkComplete ?? false;
 
   useEffect(() => {
-    if (!simpleSmartAccount || linkComplete) return;
+    if (!goClaimAccountAddress || linkComplete) return;
 
     if (!autoOnboardingShown.current) {
       autoOnboardingShown.current = true;
       setShowOnboarding(true);
     }
-  }, [simpleSmartAccount, linkComplete]);
+  }, [goClaimAccountAddress, linkComplete]);
 
   const showOnboardingModal = showOnboarding;
 
@@ -88,32 +87,33 @@ export default function DashboardPage() {
   }
 
   async function handleSetupGoClaim() {
-    setIsCreatingAgent(true);
+    setIsCreatingGoClaimAccount(true);
     try {
       await fetch("/api/goclaim/create", {
         method: "POST",
         credentials: "include",
       });
       const { data: refreshedStatus } = await fetchStatus();
-      const refreshedSimpleSmartAccount =
-        refreshedStatus?.simpleSmartAccountAddress ??
-        refreshedStatus?.smartAccountAddress;
+      const refreshedGoClaimAccountAddress =
+        refreshedStatus?.goClaimAccountAddress;
       const refreshedLinkComplete = refreshedStatus?.linkComplete ?? false;
 
-      if (refreshedSimpleSmartAccount && !refreshedLinkComplete) {
+      if (refreshedGoClaimAccountAddress && !refreshedLinkComplete) {
         autoOnboardingShown.current = true;
         setShowOnboarding(true);
       }
     } finally {
-      setIsCreatingAgent(false);
+      setIsCreatingGoClaimAccount(false);
     }
   }
 
   const linkStatus = status?.linkStatus ?? "pending";
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
-  const showNoAgentSetup = Boolean(status && !status.hasAgent && !showError);
+  const showNoGoClaimAccountSetup = Boolean(
+    status && !status.hasGoClaimAccount && !showError
+  );
   const isInitialStatusLoad = isLoading && !status;
-  const useSetupLayout = showNoAgentSetup;
+  const useSetupLayout = showNoGoClaimAccountSetup;
 
   if (!checked || !authenticated || isInitialStatusLoad) {
     return (
@@ -163,7 +163,7 @@ export default function DashboardPage() {
               {copy.dashboard.retry}
             </button>
           </div>
-        ) : showNoAgentSetup ? (
+        ) : showNoGoClaimAccountSetup ? (
           <>
             <div className="flex-1 flex flex-col items-center justify-center py-10 px-1 min-h-0 overflow-y-auto overscroll-contain">
               <GettingStartedHero
@@ -176,10 +176,10 @@ export default function DashboardPage() {
             <div className="shrink-0 pb-2 pt-4">
               <button
                 onClick={handleSetupGoClaim}
-                disabled={isCreatingAgent}
+                disabled={isCreatingGoClaimAccount}
                 className="btn-primary"
               >
-                {isCreatingAgent
+                {isCreatingGoClaimAccount
                   ? copy.dashboard.settingUpGoClaim
                   : copy.dashboard.setupGoClaim}
               </button>
@@ -232,7 +232,7 @@ export default function DashboardPage() {
 
                 <AddressesCard
                   rootAddress={status.rootAddress}
-                  smartAccountAddress={simpleSmartAccount}
+                  goClaimAccountAddress={goClaimAccountAddress}
                 />
               </>
             )}
@@ -257,9 +257,9 @@ export default function DashboardPage() {
         </button>
       </footer>
 
-      {showOnboardingModal && simpleSmartAccount && (
+      {showOnboardingModal && goClaimAccountAddress && (
         <OnboardingModal
-          smartAccountAddress={simpleSmartAccount}
+          goClaimAccountAddress={goClaimAccountAddress}
           rootAddress={status?.rootAddress}
           linkComplete={linkComplete}
           onConnected={fetchStatus}

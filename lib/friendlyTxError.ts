@@ -5,10 +5,10 @@ export function friendlyConnectError(err?: { message?: string } | null): string 
     return "Connect your wallet first.";
   }
   if (/already connected/i.test(m)) {
-    return "This agent is already linked to an identity.";
+    return "This GoClaim account is already linked to an identity.";
   }
   if (/invalid account/i.test(m)) {
-    return "This smart account cannot be linked (already whitelisted or blacklisted).";
+    return "This GoClaim account cannot be linked (already whitelisted or blacklisted).";
   }
   if (/not whitelisted/i.test(m)) {
     return "Your root wallet is not verified. Re-verify in GoodDollar and try again.";

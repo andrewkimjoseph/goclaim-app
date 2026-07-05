@@ -5,7 +5,7 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export async function celebrateSmartAccountLink(): Promise<void> {
+export async function celebrateGoClaimAccountLink(): Promise<void> {
   if (prefersReducedMotion()) return;
 
   const { default: confetti } = await import("canvas-confetti");

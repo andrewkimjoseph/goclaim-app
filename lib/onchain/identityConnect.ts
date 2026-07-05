@@ -6,37 +6,36 @@ import { publicClient } from "./config";
 
 export const IDENTITY_CONNECT_TARGET = IDENTITY_PROXY_ADDRESS;
 
-export function encodeConnectAccount(smartAccountAddress: Address): Hex {
-  // IdentityV4.connectAccount(account): account must be the ERC-4337 simple smart account.
+export function encodeConnectAccount(goClaimAccountAddress: Address): Hex {
   return encodeFunctionData({
     abi: identityAbi,
     functionName: "connectAccount",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 }
 
-export function encodeTaggedConnectAccount(smartAccountAddress: Address): Hex {
-  return taggedCalldata(encodeConnectAccount(smartAccountAddress));
+export function encodeTaggedConnectAccount(goClaimAccountAddress: Address): Hex {
+  return taggedCalldata(encodeConnectAccount(goClaimAccountAddress));
 }
 
 export async function readConnectedRoot(
-  smartAccountAddress: Address
+  goClaimAccountAddress: Address
 ): Promise<Address> {
   return publicClient.readContract({
     address: IDENTITY_PROXY_ADDRESS,
     abi: identityAbi,
     functionName: "getWhitelistedRoot",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 }
 
 export async function readConnectedAccountsMapping(
-  smartAccountAddress: Address
+  goClaimAccountAddress: Address
 ): Promise<Address> {
   return publicClient.readContract({
     address: IDENTITY_PROXY_ADDRESS,
     abi: identityAbi,
     functionName: "connectedAccounts",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 }

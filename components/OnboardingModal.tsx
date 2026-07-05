@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { type Address } from "viem";
 import { ConnectGoClaimButton } from "@/components/ConnectGoClaimButton";
-import { celebrateSmartAccountLink } from "@/lib/celebrateLink";
+import { celebrateGoClaimAccountLink } from "@/lib/celebrateLink";
 import { copy } from "@/lib/copy";
 
 type OnboardingModalProps = {
-  smartAccountAddress: string;
+  goClaimAccountAddress: string;
   rootAddress?: string;
   linkComplete?: boolean;
   onClose: () => void;
@@ -15,7 +15,7 @@ type OnboardingModalProps = {
 };
 
 export function OnboardingModal({
-  smartAccountAddress,
+  goClaimAccountAddress,
   rootAddress,
   linkComplete,
   onClose,
@@ -34,7 +34,7 @@ export function OnboardingModal({
 
   function handleConnected() {
     setConnectedLocally(true);
-    void celebrateSmartAccountLink();
+    void celebrateGoClaimAccountLink();
     onConnected?.();
   }
 
@@ -89,7 +89,7 @@ export function OnboardingModal({
                   {!linked && (
                     <div className="mt-3">
                       <ConnectGoClaimButton
-                        smartAccountAddress={smartAccountAddress as Address}
+                        goClaimAccountAddress={goClaimAccountAddress as Address}
                         rootAddress={rootAddress as Address | undefined}
                         onConnected={handleConnected}
                         className="btn-primary text-sm"

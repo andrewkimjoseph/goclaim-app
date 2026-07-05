@@ -18,7 +18,7 @@ async function main() {
 
   console.log(`Running claim test for ${user.rootAddress}...`);
   await processClaim({ userId, waveIndex: 0 });
-  console.log("Done — check ClaimLog and TransferLog tables");
+  console.log("Done — check ClaimLog, TransferLog, and GoClaim event log tables");
   await prisma.$disconnect();
 }
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import { type Address, zeroAddress } from "viem";
 import { identityAbi } from "@/lib/onchain/abis/identity";
-import { IDENTITY_CONNECT_TARGET } from "@/lib/onchain/connectAgent";
+import { IDENTITY_CONNECT_TARGET } from "@/lib/onchain/identityConnect";
 import {
   browserPublicClient,
   sendTaggedConnectAccount,
@@ -13,7 +13,7 @@ import { friendlyConnectError } from "@/lib/friendlyTxError";
 import { copy } from "@/lib/copy";
 
 type ConnectGoClaimButtonProps = {
-  smartAccountAddress: Address;
+  goClaimAccountAddress: Address;
   rootAddress?: Address;
   onConnected?: () => void;
   className?: string;
@@ -21,7 +21,7 @@ type ConnectGoClaimButtonProps = {
 };
 
 export function ConnectGoClaimButton({
-  smartAccountAddress,
+  goClaimAccountAddress,
   rootAddress,
   onConnected,
   className = "btn-primary",
@@ -33,7 +33,7 @@ export function ConnectGoClaimButton({
     address: IDENTITY_CONNECT_TARGET,
     abi: identityAbi,
     functionName: "connectedAccounts",
-    args: [smartAccountAddress],
+    args: [goClaimAccountAddress],
   });
 
   const [localError, setLocalError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export function ConnectGoClaimButton({
     try {
       const hash = await sendTaggedConnectAccount({
         account: address,
-        smartAccountAddress,
+        goClaimAccountAddress,
       });
 
       setIsPending(false);

@@ -3,7 +3,7 @@ export const copy = {
     tagline: "Autopilot UBI",
     headline: "Your UBI, on autopilot.",
     subhead:
-      "GoClaim creates a smart account that GoClaims GoodDollar for you every day and sends G$ straight to your wallet.",
+      "GoClaim creates a GoClaim account that GoClaims GoodDollar for you every day and sends G$ straight to your wallet.",
     howItWorks: "How it works",
     steps: [
       {
@@ -14,7 +14,7 @@ export const copy = {
       {
         title: "Link",
         description:
-          "One quick approval links your GoClaim smart account to GoodDollar.",
+          "One quick approval links your GoClaim account to GoodDollar.",
       },
       {
         title: "Earn",
@@ -52,7 +52,7 @@ export const copy = {
   onboarding: {
     title: "Set up GoClaim account",
     step1: {
-      title: "Smart account created",
+      title: "GoClaim account created",
       body: "G$ GoClaimed to your wallet.",
     },
     step2: {
@@ -68,7 +68,7 @@ export const copy = {
     goToDashboard: "See Dashboard",
   },
   connect: {
-    cta: "Link smart account to GoodDollar",
+    cta: "Link GoClaim account to GoodDollar",
     confirming: "Confirming...",
     confirmInWallet: "Confirm in wallet...",
     linked: "Linked — ready",
@@ -91,7 +91,7 @@ export const copy = {
     setupSteps: [
       {
         title: "Create account",
-        description: "Your GoClaim smart account is created.",
+        description: "Your GoClaim account is created.",
       },
       {
         title: "Link to GoodDollar",
@@ -102,7 +102,7 @@ export const copy = {
         description: "G$ is sent to your wallet daily.",
       },
     ],
-    noAgent: "Your GoClaim smart account is not set up yet.",
+    noGoClaimAccount: "Your GoClaim account is not set up yet.",
     streakLabel: "GoClaim Streak",
     streakDays: (n: number) => (n === 1 ? "1 day" : `${n} days`),
     streakEmpty: "Your streak starts once your first GoClaim goes through.",
@@ -114,7 +114,7 @@ export const copy = {
     rootGdBalance: "Current G$ balance",
     lastGoClaimed: "Last GoClaim",
     addressesLabel: "Addresses",
-    smartAccountLabel: "GoClaim Smart Account",
+    goClaimAccountLabel: "GoClaim Account",
     walletLabel: "Your Wallet",
     finishSetupCta: "Finish setup",
     backToHome: "Home",
@@ -130,7 +130,7 @@ export const copy = {
   setupChecklist: {
     title: "Finish setup",
     signedIn: "Signed in",
-    linkSmartAccount: "Link smart account to GoodDollar",
+    linkGoClaimAccount: "Link GoClaim account to GoodDollar",
     goClaimsStart: "Daily GoClaims start",
   },
   goclaimStatus: {
@@ -146,7 +146,7 @@ export const copy = {
     linked_other: {
       label: "Wrong wallet linked",
       description:
-        "This smart account is linked to a different wallet. Contact support or re-setup.",
+        "This GoClaim account is linked to a different wallet. Contact support or re-setup.",
     },
     inactive: {
       label: "Paused",
@@ -191,7 +191,7 @@ export const copy = {
       {
         question: "How does setup work?",
         answer:
-          "Connect your wallet, sign in, then link your GoClaim smart account to GoodDollar once. After that, GoClaims run on their own.",
+          "Connect your wallet, sign in, then link your GoClaim account to GoodDollar once. After that, GoClaims run on their own.",
       },
       {
         question: "When are GoClaims made?",
@@ -204,7 +204,7 @@ export const copy = {
           "Straight to the root wallet you connected — the same wallet where you receive GoodDollar.",
       },
       {
-        question: "What is the smart account?",
+        question: "What is the GoClaim account?",
         answer:
           "A GoClaim-managed account on Celo that GoClaims UBI on your behalf. You approve it once in GoodDollar, then it runs in the background.",
       },

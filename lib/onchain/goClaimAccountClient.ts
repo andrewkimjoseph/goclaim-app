@@ -7,7 +7,7 @@ import { toSimpleSmartAccount } from "permissionless/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { pimlicoUrl, publicClient } from "./config";
 
-export async function createSmartAccountClientFromPrivateKey(
+export async function createGoClaimAccountClientFromPrivateKey(
   privateKeyHex: Hex
 ) {
   const eoaAccount = privateKeyToAccount(privateKeyHex);
@@ -29,7 +29,7 @@ export async function createSmartAccountClientFromPrivateKey(
     },
   });
 
-  const smartAccountClient = createSmartAccountClient({
+  const goClaimAccountClient = createSmartAccountClient({
     account: smartAccount,
     chain: celo,
     bundlerTransport: http(pimlicoUrl()),
@@ -42,7 +42,7 @@ export async function createSmartAccountClientFromPrivateKey(
 
   return {
     eoaAddress: eoaAccount.address,
-    smartAccountAddress: smartAccount.address,
-    smartAccountClient,
+    goClaimAccountAddress: smartAccount.address,
+    goClaimAccountClient,
   };
 }

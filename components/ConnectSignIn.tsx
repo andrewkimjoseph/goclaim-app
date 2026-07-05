@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { type Address } from "viem";
@@ -91,7 +91,6 @@ export function ConnectSignIn({
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isFinalizingSignIn, setIsFinalizingSignIn] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-  const finalizingRef = useRef(false);
 
   const displayAddress = walletAddress ?? address;
   const verificationAddress = walletAddress as Address | undefined;
@@ -105,7 +104,6 @@ export function ConnectSignIn({
   useEffect(() => {
     setVerificationError(null);
     setIsGeneratingLink(false);
-    finalizingRef.current = false;
     setIsFinalizingSignIn(false);
   }, [walletAddress]);
 
@@ -149,11 +147,11 @@ export function ConnectSignIn({
   const ghostBtn = isHero ? "btn-hero-secondary" : "btn-ghost";
   const hintErrorClass = isHero ? "text-red-200" : "text-red-600";
 
-  if (!checked || isFinalizingSignIn || finalizingRef.current) {
+  if (!checked || isFinalizingSignIn) {
     return (
       <LoadingSpinner
         label={
-          isFinalizingSignIn || finalizingRef.current
+          isFinalizingSignIn
             ? copy.auth.openingDashboard
             : copy.auth.checkingSession
         }
@@ -301,7 +299,6 @@ export function ConnectSignIn({
                         const ok = await signIn();
                         if (!ok) return;
 
-                        finalizingRef.current = true;
                         setIsFinalizingSignIn(true);
                         try {
                           await refresh();
@@ -312,7 +309,6 @@ export function ConnectSignIn({
                           await goToDashboard();
                         } finally {
                           if (!onSuccess) {
-                            finalizingRef.current = false;
                             setIsFinalizingSignIn(false);
                           }
                         }

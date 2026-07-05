@@ -4,10 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { ClaimLog } from "@/components/ClaimHistoryTable";
 
 export type GoClaimStatus = {
-  hasAgent: boolean;
+  hasGoClaimAccount: boolean;
   rootAddress?: string;
-  simpleSmartAccountAddress?: string;
-  smartAccountAddress?: string;
+  goClaimAccountAddress?: string;
   isCounterfactual?: boolean;
   isActive?: boolean;
   lastClaimedAt?: string | null;

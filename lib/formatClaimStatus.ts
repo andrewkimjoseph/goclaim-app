@@ -7,7 +7,9 @@ const SKIP_REASONS: Record<string, string> = {
   already_claimed: "Already GoClaimed today",
   not_whitelisted: "Not verified on GoodDollar",
   no_entitlement: "No GoClaim available yet",
-  "No active agent wallet": "Smart account not active",
+  "No active GoClaim account": "GoClaim account not active",
+  "No active smart account": "GoClaim account not active",
+  "No active agent wallet": "GoClaim account not active",
 };
 
 export function formatClaimStatus(
