@@ -43,11 +43,14 @@ Env vars:
 - `JWT_SECRET`
 - `NEXT_PUBLIC_APP_URL` (e.g. https://goclaim.xyz)
 - `CRON_SECRET`
-- `ENCRYPTION_MASTER_KEY` (needed for agent create API)
+- `ENCRYPTION_MASTER_KEY` (needed for GoClaim wallet create API)
 - `PIMLICO_API_KEY` (optional on Vercel if status reads only)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (**required for mobile web** — WalletConnect in Chrome/Safari; get a project ID from [WalletConnect Cloud](https://cloud.walletconnect.com))
+- `APP_PRIVATE_KEY` (GoClaim EIP-712 signer; **required** — must match on-chain `goClaimSigner`. Used for `GoClaimAccountCreated` and `GoClaimAccountConnected` UserOps on create/connect.)
 
 Deploy: connect repo, build uses `vercel.json`.
+
+GoClaim proxy address is pinned in `lib/onchain/constants.ts` (`GOCLAIM_PROXY_ADDRESS`) — update that file after redeploying the proxy.
 
 ## 5. Railway (cron + drain worker)
 
@@ -81,6 +84,7 @@ cronSchedule = "0 12 * * *"
 - `DATABASE_URL`
 - `ENCRYPTION_MASTER_KEY`
 - `PIMLICO_API_KEY`
+- `APP_PRIVATE_KEY` (GoClaim signer — **required** on Railway; used for `GoClaimUBIClaimed` + `GoClaimTokenTransferred` in each claim UserOp)
 - `DRPC_API_KEY` (optional)
 - `WORKER_CONCURRENCY` (optional, default `5`)
 - `WORKER_LOCK_DURATION_MS` (optional, default `120000`)
@@ -139,11 +143,86 @@ Process enqueued jobs locally:
 npm run worker:drain
 ```
 
+## 6. GoClaim on-chain logger contract
+
+The GoClaim UUPS proxy emits signed lifecycle events: `GoClaimAccountCreated`, `GoClaimAccountConnected`, `GoClaimUBIClaimed`, `GoClaimTokenTransferred`. Matching Postgres audit tables (`GoClaimAccountCreatedLog`, `GoClaimAccountConnectedLog`, `GoClaimUbiClaimedLog`, `GoClaimTokenTransferredLog`) are written when each event is submitted.
+
+### Generate signer key
+
+```bash
+openssl rand -hex 32   # prepend 0x for APP_PRIVATE_KEY
+```
+
+Fund the signer address with CELO for deploy gas. The same key is used as contract owner and initial `goClaimSigner` when deploying via the proxy script.
+
+### Compile and test locally
+
+```bash
+cd hardhat
+npm install
+npm test
+```
+
+### Deploy to Celo mainnet
+
+Set in `goclaim-app/hardhat/.env`:
+
+- `APP_PRIVATE_KEY` — deployer + initial GoClaim signer
+- `INFURA_API_KEY` (optional; falls back to public RPC)
+- `CELOSCAN_API_KEY` — for verification
+- `IDENTITY_PROXY_ADDRESS` (optional; defaults to GoodDollar Identity `0xC361…F42`)
+
+Full deploy (implementation + proxy):
+
+```bash
+cd hardhat
+npm run deploy:proxy
+```
+
+Redeploy proxy only (reuse implementation from `lib/onchain/constants.ts`):
+
+```bash
+cd hardhat
+PROXY_ONLY=1 npm run deploy:proxy
+```
+
+Verify implementation and proxy (reads addresses from `lib/onchain/constants.ts`):
+
+```bash
+cd hardhat
+npm run verify:impl
+npm run verify:proxy
+```
+
+After a new deploy, update `GOCLAIM_PROXY_ADDRESS` and `GOCLAIM_IMPLEMENTATION_ADDRESS` in `lib/onchain/constants.ts`, then redeploy Vercel/Railway so the app picks up the new addresses.
+
+### Backfill event logs (existing users)
+
+After deploying the event-log tables, run once with production env:
+
+```bash
+npm run backfill:goclaim-logs
+```
+
+Submits missing `GoClaimAccountCreated` / `GoClaimAccountConnected` UserOps and inserts Postgres rows. Claim-pair logs (`GoClaimUbiClaimed`, `GoClaimTokenTransferred`) are recorded automatically on future successful claims only.
+
+### Upgrade
+
+```bash
+cd hardhat
+npm run deploy:impl
+NEW_GOCLAIM_IMPLEMENTATION=0x... npm run upgrade:proxy
+```
+
+After upgrade, update `GOCLAIM_IMPLEMENTATION_ADDRESS` in `lib/onchain/constants.ts`.
+
+Owner calls `upgradeToAndBumpVersion` via the upgrade script. Rotate the backend signer anytime with `setGoClaimSigner(newAddress)` on the proxy (owner-only); update `APP_PRIVATE_KEY` to match.
+
 ## 7. Smoke test
 
 1. Connect verified GoodDollar root wallet on `/`
-2. Sign SIWE → agent created → onboarding modal shown
-3. Link smart account in GoodDollar
+2. Sign SIWE → GoClaim account created → onboarding modal shown
+3. Link GoClaim account in GoodDollar
 4. Dashboard shows status `active`
 5. Manual trigger + drain:
 
@@ -154,8 +233,9 @@ npm run worker:drain
 ```
 
 6. Verify `ClaimLog` success + G$ in root wallet on Celoscan
+7. Verify GoClaim events on Celoscan and Postgres (`GoClaimAccountCreatedLog`, `GoClaimAccountConnectedLog`, `GoClaimUbiClaimedLog`, `GoClaimTokenTransferredLog`)
 
-## 8. Single-user claim test (Railway/local)
+## 9. Single-user claim test (Railway/local)
 
 ```bash
 USER_ID=<cuid> npm run claim-test

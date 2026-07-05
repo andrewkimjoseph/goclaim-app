@@ -2,7 +2,7 @@
 
 Your GoodDollar UBI, on autopilot.
 
-GoClaim automatically claims G$ daily on behalf of users who have verified and whitelisted their root wallet on Celo. Users connect via SIWE, GoClaim spins up an ERC-4337 smart account, links it once in GoodDollar, and a daily cron enqueues claims through BullMQ at 12:00 PM UTC. G$ is forwarded to the user's root wallet after each claim.
+GoClaim automatically claims G$ daily on behalf of users who have verified and whitelisted their root wallet on Celo. Users connect via SIWE, GoClaim creates a GoClaim account (ERC-4337), links it once in GoodDollar, and a daily cron enqueues claims through BullMQ at 12:00 PM UTC. G$ is forwarded to the user's root wallet after each claim.
 
 ## Architecture at a glance
 
@@ -47,20 +47,20 @@ flowchart TB
 
 | Component | Role | Key files |
 |-----------|------|-----------|
-| **Next.js app (Vercel)** | Landing, dashboard, FAQs, auth + agent APIs | `app/`, `components/` |
-| **Postgres (Neon)** | Users, encrypted agent keys, claim/transfer logs, SIWE nonces | `prisma/schema.prisma` |
+| **Next.js app (Vercel)** | Landing, dashboard, FAQs, auth + GoClaim APIs | `app/`, `components/` |
+| **Postgres (Neon)** | Users, encrypted GoClaim wallet keys, claim/transfer logs, SIWE nonces | `prisma/schema.prisma` |
 | **Redis (Upstash)** | BullMQ claim queue only (not used by dashboard/auth) | `lib/queue.ts` |
 | **Cron + drain worker (Railway)** | Daily trigger, process queue, exit | `railway.toml`, `worker/runUntilDrained.ts` |
 | **Claim processor** | Runs UBI claim + G$ transfer | `worker/jobs/processClaim.ts` |
-| **Pimlico + permissionless** | ERC-4337 UserOps for claim + G$ transfer | `lib/onchain/smartAccountClient.ts`, `lib/onchain/claimUbi.ts` |
+| **Pimlico + permissionless** | ERC-4337 UserOps for claim + G$ transfer | `lib/onchain/goClaimAccountClient.ts`, `lib/onchain/claimUbi.ts` |
 
 ## User lifecycle
 
 1. **Connect GoodDollar-verified root wallet** — client checks `getWhitelistedRoot` via `lib/hooks/useWalletVerification.ts`; unverified users are sent to GoodDollar face verification.
 2. **SIWE sign-in** — JWT session cookie via `app/api/auth/nonce` and `app/api/auth/verify`; server enforces whitelisted root via `lib/requireWhitelistedRoot.ts`.
-3. **Smart account created** — random EOA + ERC-4337 simple account (EntryPoint v0.7); private key AES-256-GCM encrypted at rest (`lib/onchain/createAgent.ts`, `lib/crypto.ts`).
-4. **One-time link** — user signs GoodDollar identity `connect` from their root wallet (`components/ConnectGoClaimButton.tsx`, `lib/onchain/connectAgent.ts`).
-5. **Daily claims** — cron enqueues all active agents; worker claims UBI and transfers G$ to root in one UserOp (`lib/onchain/claimUbi.ts`: `UBIScheme.claim` + `G$.transfer`).
+3. **GoClaim account created** — random EOA + ERC-4337 account (EntryPoint v0.7); GoClaim wallet private key AES-256-GCM encrypted at rest (`lib/onchain/goClaimWallet.ts`, `lib/crypto.ts`).
+4. **One-time link** — user signs GoodDollar identity `connect` from their root wallet (`components/ConnectGoClaimButton.tsx`, `lib/onchain/identityConnect.ts`).
+5. **Daily claims** — cron enqueues all active GoClaim accounts; worker claims UBI and transfers G$ to root in one UserOp (`lib/onchain/claimUbi.ts`: `UBIScheme.claim` + `G$.transfer`).
 6. **Dashboard** — status, claim history, and transfer amounts from `ClaimLog` + `TransferLog` (`app/api/goclaim/status/route.ts`).
 
 ## Daily claim pipeline
@@ -74,7 +74,7 @@ sequenceDiagram
   participant Chain as Celo
 
   Cron->>API: POST Bearer CRON_SECRET
-  API->>DB: active AgentWallets
+  API->>DB: active GoClaimWallets
   API->>Redis: enqueue userId jobs in waves
   Cron->>Redis: runUntilDrained worker
   Cron->>DB: decrypt key, load user
@@ -90,11 +90,15 @@ Jobs are enqueued in waves of 50 with a 2s gap between waves (`lib/queue.ts`). T
 
 | Model | Purpose |
 |-------|---------|
-| **User** | Root wallet address; 1:1 with agent |
-| **AgentWallet** | Smart account address, encrypted EOA key, `isActive`, `lastClaimedAt` |
+| **User** | Root wallet address; 1:1 with GoClaim wallet |
+| **GoClaimWallet** | GoClaim account address, encrypted EOA key, `isActive`, `lastClaimedAt` |
 | **ClaimLog** | Per-attempt status (`success` / `skipped` / `failed`), optional tx hash |
 | **TransferLog** | 1:1 with successful claim; amount in wei, tx hash, userOp hash |
 | **ConnectAccountLog** | One-time GoodDollar `connectAccount` success per user (tx hash, addresses, timestamp) |
+| **GoClaimAccountCreatedLog** | On-chain `GoClaimAccountCreated` audit (1 per user) |
+| **GoClaimAccountConnectedLog** | On-chain `GoClaimAccountConnected` audit (1 per user) |
+| **GoClaimUbiClaimedLog** | On-chain `GoClaimUBIClaimed` per successful claim |
+| **GoClaimTokenTransferredLog** | On-chain `GoClaimTokenTransferred` per successful claim |
 | **Nonce** | SIWE anti-replay nonces |
 
 See `prisma/schema.prisma` for the full schema.
@@ -107,7 +111,7 @@ See `prisma/schema.prisma` for the full schema.
 | `POST /api/auth/verify` | — | Verify SIWE signature, set session |
 | `GET /api/auth/session` | cookie | Current session (`200` + `authenticated: false` when logged out) |
 | `POST /api/auth/logout` | cookie | Clear session |
-| `POST /api/goclaim/create` | JWT | Create or return smart account |
+| `POST /api/goclaim/create` | JWT | Create or return GoClaim wallet + account |
 | `GET /api/goclaim/status` | JWT | Dashboard state + claim history |
 | `POST /api/goclaim/connect-log` | JWT | Log GoodDollar connectAccount tx |
 | `POST /api/internal/trigger-claims` | `CRON_SECRET` | Enqueue daily claim jobs |
@@ -122,11 +126,11 @@ Celo mainnet contracts (`lib/onchain/constants.ts`):
 | UBI Scheme proxy | `0x43d72Ff17701B2DA814620735C39C620Ce0ea4A1` | `claim`, `hasClaimed`, `checkEntitlement` |
 | G$ token | `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A` | Transfer to root after claim |
 
-Smart accounts use EntryPoint v0.7 simple accounts via `permissionless`. UserOps are submitted through Pimlico. Optional `DRPC_API_KEY` improves RPC reliability. Claim, transfer, and root-wallet `connectAccount` calldata include a GOCLAIM attribution suffix (`lib/onchain/attribution.ts`).
+GoClaim accounts use EntryPoint v0.7 via `permissionless`. UserOps are submitted through Pimlico. Optional `DRPC_API_KEY` improves RPC reliability. Claim, transfer, and root-wallet `connectAccount` calldata include a GOCLAIM attribution suffix (`lib/onchain/attribution.ts`).
 
 ## Security model
 
-- **Agent private keys** — encrypted with `ENCRYPTION_MASTER_KEY` (AES-256-GCM); only the worker and agent-create API decrypt them.
+- **GoClaim wallet private keys** — encrypted with `ENCRYPTION_MASTER_KEY` (AES-256-GCM); only the worker and create API decrypt them.
 - **Auth** — HTTP-only JWT cookie; SIWE domain binding; only whitelisted **root** wallets can sign in (linked wallets are rejected).
 - **Cron** — `POST /api/internal/trigger-claims` requires `Authorization: Bearer $CRON_SECRET`.
 - **Browser** — private keys are never sent to the client after creation.
@@ -178,7 +182,8 @@ To test the full queue locally, enqueue via curl then run `npm run worker:drain`
 | `npm run claim-test` | Manual claim for one user (`USER_ID=...`) |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:generate` | Generate Prisma client |
-| `npm run rotate-keys` | Re-encrypt agent keys with a new master key |
+| `npm run rotate-keys` | Re-encrypt GoClaim wallet keys with a new master key |
+| `npm run backfill:goclaim-logs` | Backfill GoClaimAccountCreated/Connected Postgres + on-chain logs |
 
 ## Deployment
 
