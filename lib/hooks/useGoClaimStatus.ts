@@ -7,6 +7,10 @@ export type GoClaimStatus = {
   hasGoClaimAccount: boolean;
   rootAddress?: string;
   goClaimAccountAddress?: string;
+  goClaimEventLogs?: {
+    accountCreated: boolean;
+    accountConnected: boolean;
+  };
   isCounterfactual?: boolean;
   isActive?: boolean;
   lastClaimedAt?: string | null;

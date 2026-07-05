@@ -1,31 +1,41 @@
 import { encodeFunctionData, formatUnits, type Address, type Hex } from "viem";
 import { erc20Abi } from "./abis/erc20";
+import { goClaimAbi } from "./abis/goClaim";
 import { ubiSchemeAbi } from "./abis/ubiScheme";
 import { appendDataSuffix } from "./attribution";
 import {
   GOOD_DOLLAR_TOKEN_ADDRESS,
+  GOCLAIM_PROXY_ADDRESS,
   UBI_SCHEME_PROXY_ADDRESS,
 } from "./constants";
 import { checkUbiClaimEligibility } from "./eligibility";
-import { createSmartAccountClientFromPrivateKey } from "./smartAccountClient";
+import {
+  isGoClaimSigningConfigured,
+  signTokenTransferredRequest,
+  signUbiClaimedRequest,
+} from "./goClaim/signatures";
+import { createGoClaimAccountClientFromPrivateKey } from "./goClaimAccountClient";
+import { requireGoClaimSigningInProduction } from "./goClaim/persistEventLog";
 
 export type ClaimUbiResult =
   | {
       claimed: true;
       eoaAddress: Hex;
-      smartAccountAddress: Hex;
+      goClaimAccountAddress: Hex;
       whitelistedRoot: Hex;
       entitlement: string;
       userOpHash: Hex;
       transactionHash: Hex;
+      goClaimEventsLogged: boolean;
     }
   | {
       claimed: false;
       eoaAddress: Hex;
-      smartAccountAddress: Hex;
+      goClaimAccountAddress: Hex;
       whitelistedRoot: Hex;
       entitlement: "0";
       reason: "already_claimed";
+      goClaimEventsLogged: false;
     };
 
 export async function claimUbi(
@@ -38,16 +48,17 @@ export async function claimUbi(
     return {
       claimed: false,
       eoaAddress: eligibility.eoaAddress,
-      smartAccountAddress: eligibility.smartAccountAddress,
+      goClaimAccountAddress: eligibility.goClaimAccountAddress,
       whitelistedRoot: eligibility.whitelistedRoot,
       entitlement: "0",
       reason: "already_claimed",
+      goClaimEventsLogged: false,
     };
   }
 
   if (eligibility.status === "not_whitelisted") {
     throw new Error(
-      "Smart account is not GoodDollar whitelisted (UBIScheme: not whitelisted)."
+      "GoClaim account is not GoodDollar whitelisted (UBIScheme: not whitelisted)."
     );
   }
 
@@ -57,8 +68,8 @@ export async function claimUbi(
     );
   }
 
-  const { smartAccountClient } =
-    await createSmartAccountClientFromPrivateKey(privateKeyHex);
+  const { goClaimAccountClient } =
+    await createGoClaimAccountClientFromPrivateKey(privateKeyHex);
 
   const claimData = encodeFunctionData({
     abi: ubiSchemeAbi,
@@ -72,20 +83,81 @@ export async function claimUbi(
     args: [rootAddress, eligibility.entitlement],
   });
 
-  const userOpHash = await smartAccountClient.sendUserOperation({
-    calls: [
+  const calls: Array<{ to: Address; data: Hex }> = [
+    {
+      to: UBI_SCHEME_PROXY_ADDRESS,
+      data: appendDataSuffix(claimData),
+    },
+    {
+      to: GOOD_DOLLAR_TOKEN_ADDRESS,
+      data: appendDataSuffix(transferData),
+    },
+  ];
+
+  let goClaimEventsLogged = false;
+
+  requireGoClaimSigningInProduction();
+  if (isGoClaimSigningConfigured()) {
+    goClaimEventsLogged = true;
+    const goClaimAddress = GOCLAIM_PROXY_ADDRESS;
+    const [ubiSigned, transferSigned] = await Promise.all([
+      signUbiClaimedRequest(
+        eligibility.goClaimAccountAddress,
+        eligibility.whitelistedRoot,
+        GOOD_DOLLAR_TOKEN_ADDRESS,
+        eligibility.entitlement
+      ),
+      signTokenTransferredRequest(
+        eligibility.goClaimAccountAddress,
+        rootAddress,
+        GOOD_DOLLAR_TOKEN_ADDRESS,
+        eligibility.entitlement
+      ),
+    ]);
+
+    const logUbiData = encodeFunctionData({
+      abi: goClaimAbi,
+      functionName: "logUbiClaimed",
+      args: [
+        eligibility.goClaimAccountAddress,
+        eligibility.whitelistedRoot,
+        GOOD_DOLLAR_TOKEN_ADDRESS,
+        eligibility.entitlement,
+        ubiSigned.nonce,
+        ubiSigned.signature,
+      ],
+    });
+
+    const logTransferData = encodeFunctionData({
+      abi: goClaimAbi,
+      functionName: "logTokenTransferred",
+      args: [
+        eligibility.goClaimAccountAddress,
+        rootAddress,
+        GOOD_DOLLAR_TOKEN_ADDRESS,
+        eligibility.entitlement,
+        transferSigned.nonce,
+        transferSigned.signature,
+      ],
+    });
+
+    calls.push(
       {
-        to: UBI_SCHEME_PROXY_ADDRESS,
-        data: appendDataSuffix(claimData),
+        to: goClaimAddress,
+        data: appendDataSuffix(logUbiData),
       },
       {
-        to: GOOD_DOLLAR_TOKEN_ADDRESS,
-        data: appendDataSuffix(transferData),
-      },
-    ],
+        to: goClaimAddress,
+        data: appendDataSuffix(logTransferData),
+      }
+    );
+  }
+
+  const userOpHash = await goClaimAccountClient.sendUserOperation({
+    calls,
   });
 
-  const receipt = await smartAccountClient.waitForUserOperationReceipt({
+  const receipt = await goClaimAccountClient.waitForUserOperationReceipt({
     hash: userOpHash,
   });
 
@@ -96,11 +168,12 @@ export async function claimUbi(
   return {
     claimed: true,
     eoaAddress: eligibility.eoaAddress,
-    smartAccountAddress: eligibility.smartAccountAddress,
+    goClaimAccountAddress: eligibility.goClaimAccountAddress,
     whitelistedRoot: eligibility.whitelistedRoot,
     entitlement: eligibility.entitlement.toString(),
     userOpHash,
     transactionHash: receipt.receipt.transactionHash,
+    goClaimEventsLogged,
   };
 }
 

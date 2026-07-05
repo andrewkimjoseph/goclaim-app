@@ -4,6 +4,8 @@ import { decryptPrivateKey } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
 import { claimUbi } from "@/lib/onchain/claimUbi";
 import { checkUbiClaimEligibility } from "@/lib/onchain/eligibility";
+import { GOOD_DOLLAR_TOKEN_ADDRESS } from "@/lib/onchain/constants";
+import { createClaimGoClaimEventLogs } from "@/lib/onchain/goClaim/persistEventLog";
 import type { ClaimJobData } from "@/lib/queue";
 
 const CLAIM_TIMEOUT_MS = 45_000;
@@ -11,17 +13,17 @@ const CLAIM_TIMEOUT_MS = 45_000;
 export async function processClaim(data: ClaimJobData): Promise<void> {
   const { userId, waveIndex } = data;
 
-  const agent = await prisma.agentWallet.findUnique({
+  const goClaimWallet = await prisma.goClaimWallet.findUnique({
     where: { userId },
     include: { user: true },
   });
 
-  if (!agent || !agent.isActive) {
+  if (!goClaimWallet || !goClaimWallet.isActive) {
     await prisma.claimLog.create({
       data: {
         userId,
         status: "skipped",
-        errorMsg: "No active agent wallet",
+        errorMsg: "No active GoClaim account",
         waveIndex,
       },
     });
@@ -29,8 +31,8 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
   }
 
   const privateKey = decryptPrivateKey(
-    agent.encryptedPrivateKey,
-    agent.iv
+    goClaimWallet.encryptedPrivateKey,
+    goClaimWallet.iv
   ) as Hex;
   const privateKeyHex = (
     privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`
@@ -80,7 +82,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
 
     const result = await claimUbi(
       privateKeyHex,
-      agent.user.rootAddress as Address
+      goClaimWallet.user.rootAddress as Address
     );
 
     if (!result.claimed) {
@@ -109,14 +111,27 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
         data: {
           userId,
           claimLogId: claimLog.id,
-          recipientAddress: agent.user.rootAddress.toLowerCase(),
+          recipientAddress: goClaimWallet.user.rootAddress.toLowerCase(),
           amountWei: result.entitlement,
           txHash: result.transactionHash,
           userOpHash: result.userOpHash,
         },
       });
 
-      await tx.agentWallet.update({
+      if (result.goClaimEventsLogged) {
+        await createClaimGoClaimEventLogs(tx, {
+          userId,
+          claimLogId: claimLog.id,
+          goClaimAccountAddress: result.goClaimAccountAddress,
+          rootAddress: goClaimWallet.user.rootAddress as Address,
+          tokenAddress: GOOD_DOLLAR_TOKEN_ADDRESS,
+          amountWei: result.entitlement,
+          txHash: result.transactionHash,
+          userOpHash: result.userOpHash,
+        });
+      }
+
+      await tx.goClaimWallet.update({
         where: { userId },
         data: { lastClaimedAt: new Date() },
       });

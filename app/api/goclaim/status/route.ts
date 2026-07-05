@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
     where: { id: session.userId },
     include: {
       goClaimWallet: true,
+      goClaimAccountCreatedLog: true,
+      goClaimAccountConnectedLog: true,
       claimLogs: {
         orderBy: { claimedAt: "desc" },
         take: claimLogsLimit,
@@ -127,6 +129,10 @@ export async function GET(request: NextRequest) {
     lifetimeGdClaimed: formatGdAmountWhole(totalWei.toString()),
     claimStreak,
     rootGdBalance,
+    goClaimEventLogs: {
+      accountCreated: Boolean(user.goClaimAccountCreatedLog),
+      accountConnected: Boolean(user.goClaimAccountConnectedLog),
+    },
     claimLogs: (user.claimLogs as ClaimLogRow[]).map((log) => ({
       id: log.id,
       status: log.status,
