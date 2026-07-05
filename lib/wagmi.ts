@@ -14,6 +14,15 @@ const celoTransport = drpcKey
   ? http(`https://lb.drpc.live/celo/${drpcKey}`)
   : http();
 
+const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+
+if (typeof window !== "undefined" && !walletConnectProjectId) {
+  console.warn(
+    "[GoClaim] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is unset — mobile browser wallet connect will not work."
+  );
+}
+
 const connectors = connectorsForWallets(
   [
     {
@@ -29,7 +38,7 @@ const connectors = connectorsForWallets(
   ],
   {
     appName: "GoClaim",
-    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
+    projectId: walletConnectProjectId,
   }
 );
 

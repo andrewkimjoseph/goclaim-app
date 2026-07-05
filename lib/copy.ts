@@ -40,6 +40,7 @@ export const copy = {
       "Connected wallet differs from your signed-in wallet. Switch accounts or sign in again.",
     openingDashboard: "Opening dashboard...",
     checkingVerification: "Checking verification…",
+    preparingWallet: "Preparing wallet…",
     verifiedBadge: "Verified",
     getVerified: "Get verified",
     confirmInWallet: "Confirm in wallet",

@@ -37,8 +37,8 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="app-shell app-shell-pinned">
-      <header className="header-bar" style={{ viewTransitionName: "site-header" }}>
+    <div className="app-shell min-h-dvh flex flex-col">
+      <header className="header-bar shrink-0" style={{ viewTransitionName: "site-header" }}>
         <Link href="/">
           <BrandLogo size="nav" priority />
         </Link>
@@ -51,8 +51,8 @@ export default function LandingPage() {
         </Link>
       </header>
 
-      <main className="flex-1 min-h-0 flex flex-col">
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col items-center justify-center py-8">
+      <main className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col items-center justify-center py-8">
           <GettingStartedHero
             headline={copy.landing.headline}
             subhead={copy.landing.subhead}
@@ -60,7 +60,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <div className="shrink-0 pb-2 w-full">
+        <div className="shrink-0 w-full mb-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <ConnectSignIn onSuccess={handleSuccess} variant="hero" />
         </div>
       </main>

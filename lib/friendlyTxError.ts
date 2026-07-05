@@ -1,6 +1,9 @@
 export function friendlyConnectError(err?: { message?: string } | null): string {
   if (!err) return "Transaction failed";
   const m = (err.message ?? "").toString();
+  if (/Connect your wallet first/i.test(m)) {
+    return "Connect your wallet first.";
+  }
   if (/already connected/i.test(m)) {
     return "This agent is already linked to an identity.";
   }

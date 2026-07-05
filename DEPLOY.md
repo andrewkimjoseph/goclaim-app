@@ -45,7 +45,7 @@ Env vars:
 - `CRON_SECRET`
 - `ENCRYPTION_MASTER_KEY` (needed for agent create API)
 - `PIMLICO_API_KEY` (optional on Vercel if status reads only)
-- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (optional)
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (**required for mobile web** — WalletConnect in Chrome/Safari; get a project ID from [WalletConnect Cloud](https://cloud.walletconnect.com))
 
 Deploy: connect repo, build uses `vercel.json`.
 

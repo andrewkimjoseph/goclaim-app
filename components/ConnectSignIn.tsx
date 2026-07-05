@@ -199,6 +199,11 @@ export function ConnectSignIn({
     verificationStatus === "notVerified" &&
     sdkReady;
 
+  const showGetVerifiedPending =
+    walletAddress &&
+    verificationStatus === "notVerified" &&
+    !sdkReady;
+
   const getVerifiedLabel = isGeneratingLink
     ? copy.auth.confirmInWallet
     : isRedirecting
@@ -223,21 +228,25 @@ export function ConnectSignIn({
             return <LoadingSpinner label={copy.auth.checkingVerification} />;
           }
 
+          const connectBtnClass = primaryBtn;
+
           return (
-            <div
-              className="w-full"
-              {...(!ready && {
-                "aria-hidden": true,
-                style: {
-                  opacity: 0,
-                  pointerEvents: "none",
-                  userSelect: "none",
-                },
-              })}
-            >
+            <div className="w-full">
               {!connected ? (
-                <button onClick={openConnectModal} className={primaryBtn}>
-                  {label}
+                <button
+                  type="button"
+                  onClick={() => ready && openConnectModal()}
+                  disabled={!ready}
+                  className={`${connectBtnClass} disabled:opacity-50 inline-flex items-center justify-center gap-2`}
+                >
+                  {!ready && (
+                    <InlineSpinner
+                      className={
+                        isHero ? "border-white/30 border-t-white" : undefined
+                      }
+                    />
+                  )}
+                  {!ready ? copy.auth.preparingWallet : label}
                 </button>
               ) : chain.unsupported ? (
                 <button onClick={openChainModal} className={secondaryBtn}>
@@ -257,12 +266,31 @@ export function ConnectSignIn({
                       type="button"
                       onClick={handleGetVerified}
                       disabled={isGeneratingLink || isRedirecting}
-                      className={`${primaryBtn} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
+                      className={`${connectBtnClass} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
                     >
                       {(isGeneratingLink || isRedirecting) && (
-                        <InlineSpinner className="border-white/30 border-t-white" />
+                        <InlineSpinner
+                          className={
+                            isHero ? "border-white/30 border-t-white" : undefined
+                          }
+                        />
                       )}
                       {getVerifiedLabel}
+                    </button>
+                  )}
+
+                  {showGetVerifiedPending && (
+                    <button
+                      type="button"
+                      disabled
+                      className={`${connectBtnClass} text-sm disabled:opacity-50 inline-flex items-center justify-center gap-2`}
+                    >
+                      <InlineSpinner
+                        className={
+                          isHero ? "border-white/30 border-t-white" : undefined
+                        }
+                      />
+                      {copy.auth.preparingWallet}
                     </button>
                   )}
 
@@ -289,7 +317,7 @@ export function ConnectSignIn({
                           }
                         }
                       }}
-                      className={`${primaryBtn} disabled:opacity-50`}
+                      className={`${connectBtnClass} disabled:opacity-50`}
                     >
                       {phase === "awaiting_signature"
                         ? copy.connect.confirmInWallet
@@ -322,11 +350,6 @@ export function ConnectSignIn({
       {isConnected && !error && !verificationError && canSignIn && !isHero && (
         <p className="text-foreground/70 text-sm text-center">
           {copy.auth.signInHint}
-        </p>
-      )}
-      {!isConnected && !error && !isHero && (
-        <p className="text-foreground/60 text-xs text-center">
-          {copy.auth.sessionHint}
         </p>
       )}
     </div>

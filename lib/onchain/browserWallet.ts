@@ -1,13 +1,12 @@
 import {
   createPublicClient,
-  createWalletClient,
-  custom,
   http,
   type Address,
   type Hash,
-  type EIP1193Provider,
 } from "viem";
 import { celo } from "viem/chains";
+import { getWalletClient } from "wagmi/actions";
+import { config } from "@/lib/wagmi";
 import {
   encodeTaggedConnectAccount,
   IDENTITY_CONNECT_TARGET,
@@ -27,16 +26,10 @@ export async function sendTaggedConnectAccount({
   account: Address;
   smartAccountAddress: Address;
 }): Promise<Hash> {
-  const provider = (window as Window & { ethereum?: EIP1193Provider }).ethereum;
-  if (!provider) {
-    throw new Error("No wallet found. Open this in your wallet.");
+  const walletClient = await getWalletClient(config, { chainId: celo.id });
+  if (!walletClient) {
+    throw new Error("Connect your wallet first.");
   }
-
-  const walletClient = createWalletClient({
-    account,
-    chain: celo,
-    transport: custom(provider),
-  });
 
   return walletClient.sendTransaction({
     account,
