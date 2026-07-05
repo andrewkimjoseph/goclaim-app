@@ -8,13 +8,17 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(cuid())
-  rootAddress        String              @unique
-  createdAt          DateTime            @default(now())
-  goClaimWallet      GoClaimWallet?
-  claimLogs          ClaimLog[]
-  transferLogs       TransferLog[]
-  connectAccountLog  ConnectAccountLog?
+  id                          String                       @id @default(cuid())
+  rootAddress                 String                       @unique
+  createdAt                   DateTime                     @default(now())
+  goClaimWallet               GoClaimWallet?
+  claimLogs                   ClaimLog[]
+  transferLogs                TransferLog[]
+  connectAccountLog           ConnectAccountLog?
+  goClaimAccountCreatedLog    GoClaimAccountCreatedLog?
+  goClaimAccountConnectedLog  GoClaimAccountConnectedLog?
+  goClaimUbiClaimedLogs       GoClaimUbiClaimedLog[]
+  goClaimTokenTransferredLogs GoClaimTokenTransferredLog[]
 }
 
 model GoClaimWallet {
@@ -32,15 +36,17 @@ model GoClaimWallet {
 }
 
 model ClaimLog {
-  id        String       @id @default(cuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id])
-  status    String
-  txHash    String?
-  errorMsg  String?
-  claimedAt DateTime     @default(now())
-  waveIndex Int?
-  transfer  TransferLog?
+  id                        String                      @id @default(cuid())
+  userId                    String
+  user                      User                        @relation(fields: [userId], references: [id])
+  status                    String
+  txHash                    String?
+  errorMsg                  String?
+  claimedAt                 DateTime                    @default(now())
+  waveIndex                 Int?
+  transfer                  TransferLog?
+  goClaimUbiClaimedLog      GoClaimUbiClaimedLog?
+  goClaimTokenTransferredLog GoClaimTokenTransferredLog?
 }
 
 model TransferLog {
@@ -64,6 +70,57 @@ model ConnectAccountLog {
   rootAddress           String
   txHash                String   @unique
   connectedAt           DateTime @default(now())
+}
+
+model GoClaimAccountCreatedLog {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  goClaimAccountAddress String
+  txHash                String
+  userOpHash            String
+  loggedAt              DateTime @default(now())
+}
+
+model GoClaimAccountConnectedLog {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  goClaimAccountAddress String
+  rootAddress           String
+  txHash                String
+  userOpHash            String
+  loggedAt              DateTime @default(now())
+}
+
+model GoClaimUbiClaimedLog {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  claimLogId            String   @unique
+  claimLog              ClaimLog @relation(fields: [claimLogId], references: [id])
+  goClaimAccountAddress String
+  rootAddress           String
+  tokenAddress          String
+  amountWei             String
+  txHash                String
+  userOpHash            String
+  loggedAt              DateTime @default(now())
+}
+
+model GoClaimTokenTransferredLog {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  claimLogId            String   @unique
+  claimLog              ClaimLog @relation(fields: [claimLogId], references: [id])
+  goClaimAccountAddress String
+  recipientAddress      String
+  tokenAddress          String
+  amountWei             String
+  txHash                String
+  userOpHash            String
+  loggedAt              DateTime @default(now())
 }
 
 model Nonce {
