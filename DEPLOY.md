@@ -44,7 +44,7 @@ Env vars:
 - `NEXT_PUBLIC_APP_URL` (e.g. https://goclaim.xyz)
 - `CRON_SECRET`
 - `ENCRYPTION_MASTER_KEY` (needed for GoClaim wallet create API)
-- `PIMLICO_API_KEY` (optional on Vercel if status reads only)
+- `PIMLICO_API_KEY` (**required** — Pimlico bundler + paymaster for `GoClaimAccountCreated` and `GoClaimAccountConnected` UserOps on `POST /api/goclaim/create` and `POST /api/goclaim/connect-log`; use the same key as Railway)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (**required for mobile web** — WalletConnect in Chrome/Safari; get a project ID from [WalletConnect Cloud](https://cloud.walletconnect.com))
 - `APP_PRIVATE_KEY` (GoClaim EIP-712 signer; **required** — must match on-chain `goClaimSigner`. Used for `GoClaimAccountCreated` and `GoClaimAccountConnected` UserOps on create/connect.)
 
@@ -83,8 +83,8 @@ cronSchedule = "0 12 * * *"
 - `UPSTASH_REDIS_URL`
 - `DATABASE_URL`
 - `ENCRYPTION_MASTER_KEY`
-- `PIMLICO_API_KEY`
-- `APP_PRIVATE_KEY` (GoClaim signer — **required** on Railway; used for `GoClaimUBIClaimed` + `GoClaimTokenTransferred` in each claim UserOp)
+- `PIMLICO_API_KEY` (**required** — bundler + paymaster for claim UserOps and GoClaim event logging)
+- `APP_PRIVATE_KEY` (GoClaim signer — **required**; used for `GoClaimUBIClaimed` + `GoClaimTokenTransferred` in each claim UserOp)
 - `DRPC_API_KEY` (optional)
 - `WORKER_CONCURRENCY` (optional, default `5`)
 - `WORKER_LOCK_DURATION_MS` (optional, default `120000`)
@@ -146,6 +146,8 @@ npm run worker:drain
 ## 6. GoClaim on-chain logger contract
 
 The GoClaim UUPS proxy emits signed lifecycle events: `GoClaimAccountCreated`, `GoClaimAccountConnected`, `GoClaimUBIClaimed`, `GoClaimTokenTransferred`. Matching Postgres audit tables (`GoClaimAccountCreatedLog`, `GoClaimAccountConnectedLog`, `GoClaimUbiClaimedLog`, `GoClaimTokenTransferredLog`) are written when each event is submitted.
+
+**Vercel and Railway both need `PIMLICO_API_KEY` and `APP_PRIVATE_KEY`.** Create/connect logging runs on Vercel (UserOps via Pimlico). Claim-pair logging runs on Railway inside each claim UserOp. If either key is missing on Vercel, create/connect still succeed but GoClaim audit rows are skipped — check Vercel logs for `Missing PIMLICO_API_KEY` or `ensureGoClaimAccountCreatedLog failed` / `ensureGoClaimAccountConnectedLog failed`, then run `npm run backfill:goclaim-logs` after fixing env.
 
 ### Generate signer key
 
@@ -223,7 +225,7 @@ Owner calls `upgradeToAndBumpVersion` via the upgrade script. Rotate the backend
 1. Connect verified GoodDollar root wallet on `/`
 2. Sign SIWE → GoClaim account created → onboarding modal shown
 3. Link GoClaim account in GoodDollar
-4. Dashboard shows status `active`
+4. Dashboard shows status `active`; status API `goClaimEventLogs.accountCreated` and `accountConnected` are `true`
 5. Manual trigger + drain:
 
 ```bash
