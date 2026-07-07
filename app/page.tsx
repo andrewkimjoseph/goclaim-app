@@ -42,13 +42,23 @@ export default function LandingPage() {
         <Link href="/">
           <BrandLogo size="nav" priority />
         </Link>
-        <Link
-          href="/faqs"
-          transitionTypes={["nav-forward"]}
-          className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
-        >
-          {copy.faqs.headerButton}
-        </Link>
+        <nav className="flex items-center gap-2">
+          <Link
+            href="/faqs"
+            transitionTypes={["nav-forward"]}
+            className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
+          >
+            {copy.faqs.headerButton}
+          </Link>
+          <a
+            href={copy.links.websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="section-label-inverse hover:bg-white/10 transition-colors shrink-0"
+          >
+            {copy.links.websiteLabel}
+          </a>
+        </nav>
       </header>
 
       <main className="flex-1 flex flex-col min-h-0">

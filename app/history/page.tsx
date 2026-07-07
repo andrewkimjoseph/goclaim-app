@@ -67,11 +67,21 @@ export default function HistoryPage() {
             {copy.goClaimHistory.title}
           </h1>
           {status?.hasGoClaimAccount && !isLoading && (
-            <p className="text-sm text-white/80">
-              {copy.goClaimHistory.pageSummary(
-                status.lifetimeClaims ?? 0,
-                status.lifetimeGdClaimed ?? "0"
-              )}
+            <p className="text-sm text-white/80 inline-flex items-center gap-1 flex-wrap">
+              <span className="inline-flex items-center gap-1">
+                {status.lifetimeClaims ?? 0}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/flame.svg"
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="shrink-0"
+                  aria-hidden
+                />
+                {copy.goClaimHistory.goClaimsLabel}
+              </span>
+              {copy.goClaimHistory.pageSummaryGdSent(status.lifetimeGdClaimed ?? "0")}
             </p>
           )}
         </div>

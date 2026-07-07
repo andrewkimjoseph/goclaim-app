@@ -1,4 +1,9 @@
 export const copy = {
+  links: {
+    websiteUrl: "https://goclaim.xyz",
+    websiteLabel: "Website",
+    visitWebsite: "Visit website",
+  },
   landing: {
     tagline: "Autopilot UBI",
     headline: "Your UBI, on autopilot.",
@@ -163,8 +168,8 @@ export const copy = {
     view: "View",
     viewAllHistory: "View all GoClaims",
     backToDashboard: "Dashboard",
-    pageSummary: (count: number, totalGd: string) =>
-      `${count} GoClaims · ${totalGd} G$ sent`,
+    goClaimsLabel: "GoClaims",
+    pageSummaryGdSent: (totalGd: string) => `· ${totalGd} G$ sent`,
   },
   time: {
     claimScheduleUtc: "daily at 12:00 PM UTC",
