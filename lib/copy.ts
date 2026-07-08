@@ -161,6 +161,7 @@ export const copy = {
   goClaimHistory: {
     title: "GoClaim History",
     empty: "No GoClaims yet.",
+    number: "#",
     date: "Date",
     status: "Status",
     amount: "G$ sent",

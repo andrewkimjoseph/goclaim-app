@@ -54,6 +54,7 @@ function ClaimHistoryPreviewTable({ logs }: { logs: ClaimLog[] }) {
     <table className="w-full text-sm">
       <thead className="sticky top-0 bg-white">
         <tr className="text-left text-foreground/60 border-b-2 border-black">
+          <th className="pb-3 pr-4">{copy.goClaimHistory.number}</th>
           <th className="pb-3 pr-4">{copy.goClaimHistory.date}</th>
           <th className="pb-3 pr-4">{copy.goClaimHistory.status}</th>
           <th className="pb-3 pr-4">{copy.goClaimHistory.amount}</th>
@@ -61,13 +62,16 @@ function ClaimHistoryPreviewTable({ logs }: { logs: ClaimLog[] }) {
         </tr>
       </thead>
       <tbody>
-        {logs.map((log) => {
+        {logs.map((log, index) => {
           const display = formatClaimStatus(log.status, log.errorMsg);
           return (
             <tr
               key={log.id}
               className="border-b border-black/10 last:border-0"
             >
+              <ClaimHistoryCell className="text-primary tabular-nums font-medium">
+                {logs.length - index}
+              </ClaimHistoryCell>
               <ClaimHistoryCell className="whitespace-nowrap">
                 {formatClaimDate(log.claimedAt)}
               </ClaimHistoryCell>
