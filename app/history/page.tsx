@@ -107,7 +107,10 @@ export default function HistoryPage() {
             </Link>
           </div>
         ) : (
-          <ClaimHistoryTable logs={status.claimLogs ?? []} />
+          <ClaimHistoryTable
+            logs={status.claimLogs ?? []}
+            totalCount={status.lifetimeClaims}
+          />
         )}
       </main>
     </div>

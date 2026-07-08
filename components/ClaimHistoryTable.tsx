@@ -20,6 +20,8 @@ type ClaimHistoryTableProps = {
   logs: ClaimLog[];
   limit?: number;
   viewAllHref?: string;
+  /** Full claim count for reverse numbering in previews (e.g. lifetimeClaims). */
+  totalCount?: number;
 };
 
 function statusClass(status: string) {
@@ -49,7 +51,13 @@ function ClaimHistoryCell({
   );
 }
 
-function ClaimHistoryPreviewTable({ logs }: { logs: ClaimLog[] }) {
+function ClaimHistoryPreviewTable({
+  logs,
+  totalCount = logs.length,
+}: {
+  logs: ClaimLog[];
+  totalCount?: number;
+}) {
   return (
     <table className="w-full text-sm">
       <thead className="sticky top-0 bg-white">
@@ -70,7 +78,7 @@ function ClaimHistoryPreviewTable({ logs }: { logs: ClaimLog[] }) {
               className="border-b border-black/10 last:border-0"
             >
               <ClaimHistoryCell className="text-primary tabular-nums font-medium">
-                {logs.length - index}
+                {totalCount - index}
               </ClaimHistoryCell>
               <ClaimHistoryCell className="whitespace-nowrap">
                 {formatClaimDate(log.claimedAt)}
@@ -111,9 +119,11 @@ export function ClaimHistoryTable({
   logs,
   limit,
   viewAllHref,
+  totalCount,
 }: ClaimHistoryTableProps) {
   const isPreview = limit !== undefined || viewAllHref !== undefined;
   const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
+  const numberingTotal = totalCount ?? logs.length;
   const showViewAll = viewAllHref !== undefined && logs.length > 1;
   const showTitle = isPreview;
   const needsScrollCap = isPreview && visibleLogs.length > 1;
@@ -151,10 +161,13 @@ export function ClaimHistoryTable({
       )}
       {isPreview ? (
         <div className={scrollClass}>
-          <ClaimHistoryPreviewTable logs={visibleLogs} />
+          <ClaimHistoryPreviewTable
+            logs={visibleLogs}
+            totalCount={numberingTotal}
+          />
         </div>
       ) : (
-        <ClaimHistoryPreviewTable logs={visibleLogs} />
+        <ClaimHistoryPreviewTable logs={visibleLogs} totalCount={numberingTotal} />
       )}
       {showViewAll && (
         <Link

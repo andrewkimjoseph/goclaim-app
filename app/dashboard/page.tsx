@@ -252,6 +252,7 @@ export default function DashboardPage() {
                 logs={status.claimLogs ?? []}
                 limit={1}
                 viewAllHref="/history"
+                totalCount={status.lifetimeClaims}
               />
             )}
           </>
