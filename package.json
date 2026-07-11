@@ -23,7 +23,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@andrewkimjoseph/celina-sdk": "^0.10.0",
+    "@andrewkimjoseph/celina-sdk": "0.12.1",
     "@goodsdks/identity-sdk": "^1.0.5",
     "@prisma/client": "^5.22.0",
     "@rainbow-me/rainbowkit": "^2.2.11",
