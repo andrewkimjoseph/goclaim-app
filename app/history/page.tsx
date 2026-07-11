@@ -110,6 +110,7 @@ export default function HistoryPage() {
           <ClaimHistoryTable
             logs={status.claimLogs ?? []}
             totalCount={status.lifetimeClaims}
+            daysWindow={7}
           />
         )}
       </main>
