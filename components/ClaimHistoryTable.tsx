@@ -4,6 +4,10 @@ import Link from "next/link";
 import { type ReactNode } from "react";
 import { formatClaimStatus } from "@/lib/formatClaimStatus";
 import { copy } from "@/lib/copy";
+import {
+  filterClaimLogsWithNumbers,
+  type NumberedClaimRow,
+} from "@/lib/filterClaimLogsByDays";
 
 export type ClaimLog = {
   id: string;
@@ -22,6 +26,8 @@ type ClaimHistoryTableProps = {
   viewAllHref?: string;
   /** Full claim count for reverse numbering in previews (e.g. lifetimeClaims). */
   totalCount?: number;
+  /** When set, only show claims within this many local calendar days. */
+  daysWindow?: number;
 };
 
 function statusClass(status: string) {
@@ -51,13 +57,7 @@ function ClaimHistoryCell({
   );
 }
 
-function ClaimHistoryPreviewTable({
-  logs,
-  totalCount = logs.length,
-}: {
-  logs: ClaimLog[];
-  totalCount?: number;
-}) {
+function ClaimHistoryPreviewTable({ rows }: { rows: NumberedClaimRow[] }) {
   return (
     <table className="w-full text-sm">
       <thead className="sticky top-0 bg-white">
@@ -70,7 +70,7 @@ function ClaimHistoryPreviewTable({
         </tr>
       </thead>
       <tbody>
-        {logs.map((log, index) => {
+        {rows.map(({ log, claimNumber }) => {
           const display = formatClaimStatus(log.status, log.errorMsg);
           return (
             <tr
@@ -78,7 +78,7 @@ function ClaimHistoryPreviewTable({
               className="border-b border-black/10 last:border-0"
             >
               <ClaimHistoryCell className="text-primary tabular-nums font-medium">
-                {totalCount - index}
+                {claimNumber}
               </ClaimHistoryCell>
               <ClaimHistoryCell className="whitespace-nowrap">
                 {formatClaimDate(log.claimedAt)}
@@ -115,23 +115,41 @@ function ClaimHistoryPreviewTable({
   );
 }
 
+function buildNumberedRows(
+  logs: ClaimLog[],
+  numberingTotal: number,
+  limit?: number,
+  daysWindow?: number
+): NumberedClaimRow[] {
+  if (daysWindow != null) {
+    return filterClaimLogsWithNumbers(logs, numberingTotal, daysWindow);
+  }
+
+  const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
+  return visibleLogs.map((log, index) => ({
+    log,
+    claimNumber: numberingTotal - index,
+  }));
+}
+
 export function ClaimHistoryTable({
   logs,
   limit,
   viewAllHref,
   totalCount,
+  daysWindow,
 }: ClaimHistoryTableProps) {
   const isPreview = limit !== undefined || viewAllHref !== undefined;
-  const visibleLogs = limit !== undefined ? logs.slice(0, limit) : logs;
   const numberingTotal = totalCount ?? logs.length;
+  const rows = buildNumberedRows(logs, numberingTotal, limit, daysWindow);
   const showViewAll = viewAllHref !== undefined && logs.length > 1;
   const showTitle = isPreview;
-  const needsScrollCap = isPreview && visibleLogs.length > 1;
+  const needsScrollCap = isPreview && rows.length > 1;
   const scrollClass = needsScrollCap
     ? "overflow-x-auto overflow-y-auto max-h-[min(12rem,35vh)] min-h-0"
     : "overflow-x-auto";
 
-  if (logs.length === 0) {
+  if (rows.length === 0) {
     return (
       <div className="card">
         {showTitle && (
@@ -161,13 +179,10 @@ export function ClaimHistoryTable({
       )}
       {isPreview ? (
         <div className={scrollClass}>
-          <ClaimHistoryPreviewTable
-            logs={visibleLogs}
-            totalCount={numberingTotal}
-          />
+          <ClaimHistoryPreviewTable rows={rows} />
         </div>
       ) : (
-        <ClaimHistoryPreviewTable logs={visibleLogs} totalCount={numberingTotal} />
+        <ClaimHistoryPreviewTable rows={rows} />
       )}
       {showViewAll && (
         <Link
