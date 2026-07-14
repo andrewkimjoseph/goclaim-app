@@ -1,7 +1,6 @@
 import { copy } from "@/lib/copy";
 
 type DashboardOverviewCardProps = {
-  lifetimeClaims: number;
   lifetimeGdClaimed: string;
   rootGdBalance: string | null;
   lastClaimedAt?: string | null;
@@ -10,11 +9,10 @@ type DashboardOverviewCardProps = {
 };
 
 export function DashboardOverviewCard({
-  lifetimeClaims,
   lifetimeGdClaimed,
   rootGdBalance,
   lastClaimedAt,
-  streak,
+  streak = 0,
   onStreakOpen,
 }: DashboardOverviewCardProps) {
   return (
@@ -32,16 +30,16 @@ export function DashboardOverviewCard({
       <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t-2 border-black">
         <div>
           <p className="text-xs font-display font-semibold text-shell">
-            {copy.dashboard.totalGoClaims}
+            {copy.dashboard.streakLabel}
           </p>
           {onStreakOpen ? (
             <button
               type="button"
               onClick={onStreakOpen}
-              aria-label={`${copy.dashboard.streakLabel}: ${streak ?? 0}`}
+              aria-label={`${copy.dashboard.streakLabel}: ${streak}`}
               className="font-display font-extrabold text-4xl text-primary mt-2 flex items-center gap-1 hover:opacity-80 transition-opacity"
             >
-              <span className="tabular-nums">{lifetimeClaims}</span>
+              <span className="tabular-nums">{streak}</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/flame.svg"
@@ -54,7 +52,7 @@ export function DashboardOverviewCard({
             </button>
           ) : (
             <p className="font-display font-extrabold text-4xl text-primary mt-2">
-              {lifetimeClaims}
+              {streak}
             </p>
           )}
         </div>

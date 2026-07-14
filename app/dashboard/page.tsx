@@ -232,7 +232,6 @@ export default function DashboardPage() {
             {linkComplete && (
               <>
                 <DashboardOverviewCard
-                  lifetimeClaims={status.lifetimeClaims ?? 0}
                   lifetimeGdClaimed={status.lifetimeGdClaimed ?? "0"}
                   rootGdBalance={status.rootGdBalance ?? null}
                   lastClaimedAt={status.lastClaimedAt}

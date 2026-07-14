@@ -4,7 +4,7 @@ export type ClaimDisplayStatus = {
 };
 
 const SKIP_REASONS: Record<string, string> = {
-  already_claimed: "Already GoClaimed today",
+  already_claimed: "Claimed",
   not_whitelisted: "Not verified on GoodDollar",
   no_entitlement: "No GoClaim available yet",
   "No active GoClaim account": "GoClaim account not active",

@@ -69,7 +69,6 @@ export default function HistoryPage() {
           {status?.hasGoClaimAccount && !isLoading && (
             <p className="text-sm text-white/80 inline-flex items-center gap-1 flex-wrap">
               <span className="inline-flex items-center gap-1">
-                {status.lifetimeClaims ?? 0}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/flame.svg"
@@ -79,7 +78,7 @@ export default function HistoryPage() {
                   className="shrink-0"
                   aria-hidden
                 />
-                {copy.goClaimHistory.goClaimsLabel}
+                {copy.dashboard.streakDays(status.claimStreak ?? 0)}
               </span>
               {copy.goClaimHistory.pageSummaryGdSent(status.lifetimeGdClaimed ?? "0")}
             </p>
