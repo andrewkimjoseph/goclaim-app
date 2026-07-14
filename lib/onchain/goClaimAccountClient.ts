@@ -1,48 +1,30 @@
-import { http, type Hex } from "viem";
-import { entryPoint07Address } from "viem/account-abstraction";
-import { celo } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-import { createSmartAccountClient } from "permissionless";
-import { toSimpleSmartAccount } from "permissionless/accounts";
-import { createPimlicoClient } from "permissionless/clients/pimlico";
-import { pimlicoUrl, publicClient } from "./config";
+import { type Hex } from "viem";
+import { createAAClient, type AAClient } from "@andrewkimjoseph/celina-sdk";
+import { getPimlicoApiKey, publicClient } from "./config";
+
+export type GoClaimAccountClientBundle = {
+  eoaAddress: Hex;
+  goClaimAccountAddress: Hex;
+  aa: AAClient;
+};
 
 export async function createGoClaimAccountClientFromPrivateKey(
   privateKeyHex: Hex
-) {
-  const eoaAccount = privateKeyToAccount(privateKeyHex);
-
-  const smartAccount = await toSimpleSmartAccount({
-    client: publicClient,
-    owner: eoaAccount,
-    entryPoint: {
-      address: entryPoint07Address,
-      version: "0.7",
+): Promise<GoClaimAccountClientBundle> {
+  const aa = await createAAClient({
+    owner: privateKeyHex,
+    gasSponsorship: {
+      provider: "pimlico",
+      pimlico: { apiKey: getPimlicoApiKey() },
     },
-  });
-
-  const pimlicoClient = createPimlicoClient({
-    transport: http(pimlicoUrl()),
-    entryPoint: {
-      address: entryPoint07Address,
-      version: "0.7",
-    },
-  });
-
-  const goClaimAccountClient = createSmartAccountClient({
-    account: smartAccount,
-    chain: celo,
-    bundlerTransport: http(pimlicoUrl()),
-    paymaster: pimlicoClient,
-    userOperation: {
-      estimateFeesPerGas: async () =>
-        (await pimlicoClient.getUserOperationGasPrice()).fast,
-    },
+    attributionTags: ["goclaim"],
+    // Cast: app viem vs celina-sdk's nested viem PublicClient types can diverge.
+    publicClient: publicClient as never,
   });
 
   return {
-    eoaAddress: eoaAccount.address,
-    goClaimAccountAddress: smartAccount.address,
-    goClaimAccountClient,
+    eoaAddress: aa.eoaAddress,
+    goClaimAccountAddress: aa.smartAccountAddress,
+    aa,
   };
 }

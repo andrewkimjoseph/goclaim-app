@@ -1,7 +1,5 @@
 import { type Hex } from "viem";
-import { entryPoint07Address } from "viem/account-abstraction";
-import { privateKeyToAccount } from "viem/accounts";
-import { toSimpleSmartAccount } from "permissionless/accounts";
+import { deriveSmartAccountAddress } from "@andrewkimjoseph/celina-sdk";
 import { publicClient } from "./config";
 
 export type DerivedGoClaimAccount = {
@@ -12,19 +10,14 @@ export type DerivedGoClaimAccount = {
 export async function deriveGoClaimAccount(
   privateKeyHex: Hex
 ): Promise<DerivedGoClaimAccount> {
-  const eoaAccount = privateKeyToAccount(privateKeyHex);
-
-  const smartAccount = await toSimpleSmartAccount({
-    client: publicClient,
-    owner: eoaAccount,
-    entryPoint: {
-      address: entryPoint07Address,
-      version: "0.7",
-    },
-  });
+  const { eoaAddress, smartAccountAddress } = await deriveSmartAccountAddress(
+    privateKeyHex,
+    // Cast: app viem vs celina-sdk's nested viem PublicClient types can diverge.
+    publicClient as never
+  );
 
   return {
-    eoaAddress: eoaAccount.address,
-    goClaimAccountAddress: smartAccount.address,
+    eoaAddress,
+    goClaimAccountAddress: smartAccountAddress,
   };
 }

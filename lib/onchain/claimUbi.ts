@@ -1,8 +1,8 @@
 import { encodeFunctionData, formatUnits, type Address, type Hex } from "viem";
+import { celo } from "viem/chains";
 import { erc20Abi } from "./abis/erc20";
 import { goClaimAbi } from "./abis/goClaim";
 import { ubiSchemeAbi } from "./abis/ubiScheme";
-import { appendDataSuffix } from "./attribution";
 import {
   GOOD_DOLLAR_TOKEN_ADDRESS,
   GOCLAIM_PROXY_ADDRESS,
@@ -68,8 +68,7 @@ export async function claimUbi(
     );
   }
 
-  const { goClaimAccountClient } =
-    await createGoClaimAccountClientFromPrivateKey(privateKeyHex);
+  const { aa } = await createGoClaimAccountClientFromPrivateKey(privateKeyHex);
 
   const claimData = encodeFunctionData({
     abi: ubiSchemeAbi,
@@ -83,14 +82,23 @@ export async function claimUbi(
     args: [rootAddress, eligibility.entitlement],
   });
 
-  const calls: Array<{ to: Address; data: Hex }> = [
+  const steps: Array<{
+    kind: "contract" | "erc20";
+    to: Address;
+    data: Hex;
+    description: string;
+  }> = [
     {
+      kind: "contract",
       to: UBI_SCHEME_PROXY_ADDRESS,
-      data: appendDataSuffix(claimData),
+      data: claimData,
+      description: "Claim daily UBI",
     },
     {
+      kind: "erc20",
       to: GOOD_DOLLAR_TOKEN_ADDRESS,
-      data: appendDataSuffix(transferData),
+      data: transferData,
+      description: "Transfer G$ to root",
     },
   ];
 
@@ -141,27 +149,31 @@ export async function claimUbi(
       ],
     });
 
-    calls.push(
+    steps.push(
       {
+        kind: "contract",
         to: goClaimAddress,
-        data: appendDataSuffix(logUbiData),
+        data: logUbiData,
+        description: "Log UBI claimed",
       },
       {
+        kind: "contract",
         to: goClaimAddress,
-        data: appendDataSuffix(logTransferData),
+        data: logTransferData,
+        description: "Log token transferred",
       }
     );
   }
 
-  const userOpHash = await goClaimAccountClient.sendUserOperation({
-    calls,
+  const result = await aa.sendPreparedFlow({
+    preparedFlow: true,
+    chainId: celo.id,
+    from: aa.smartAccountAddress,
+    summary: "GoClaim UBI claim",
+    steps,
   });
 
-  const receipt = await goClaimAccountClient.waitForUserOperationReceipt({
-    hash: userOpHash,
-  });
-
-  if (!receipt.success) {
+  if (!result.success) {
     throw new Error("User operation failed");
   }
 
@@ -171,8 +183,8 @@ export async function claimUbi(
     goClaimAccountAddress: eligibility.goClaimAccountAddress,
     whitelistedRoot: eligibility.whitelistedRoot,
     entitlement: eligibility.entitlement.toString(),
-    userOpHash,
-    transactionHash: receipt.receipt.transactionHash,
+    userOpHash: result.userOpHashes[0]!,
+    transactionHash: result.transactionHashes[0]!,
     goClaimEventsLogged,
   };
 }

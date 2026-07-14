@@ -23,7 +23,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@andrewkimjoseph/celina-sdk": "0.12.1",
+    "@andrewkimjoseph/celina-sdk": "^0.15.0",
     "@goodsdks/identity-sdk": "^1.0.5",
     "@prisma/client": "^5.22.0",
     "@rainbow-me/rainbowkit": "^2.2.11",
@@ -32,7 +32,6 @@
     "canvas-confetti": "^1.9.4",
     "jose": "^6.2.3",
     "next": "16.2.9",
-    "permissionless": "^0.2.57",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "viem": "^2.53.1",

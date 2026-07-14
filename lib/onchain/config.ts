@@ -15,9 +15,6 @@ export function getPimlicoApiKey(): string {
   return key;
 }
 
-export const pimlicoUrl = () =>
-  `https://api.pimlico.io/v2/42220/rpc?apikey=${getPimlicoApiKey()}`;
-
 export const publicClient = createPublicClient({
   chain: celo,
   transport: http(rpcUrl),

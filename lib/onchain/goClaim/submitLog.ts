@@ -1,7 +1,7 @@
 import { encodeFunctionData, type Address, type Hash, type Hex } from "viem";
+import { celo } from "viem/chains";
 import { goClaimAbi } from "../abis/goClaim";
 import { GOCLAIM_PROXY_ADDRESS } from "../constants";
-import { appendDataSuffix } from "../attribution";
 import {
   isGoClaimSigningConfigured,
   signAccountConnectedRequest,
@@ -16,31 +16,33 @@ export type GoClaimLogResult = {
 
 async function sendGoClaimUserOp(
   privateKeyHex: Hex,
-  data: Hex
+  data: Hex,
+  summary: string
 ): Promise<GoClaimLogResult> {
-  const { goClaimAccountClient } =
-    await createGoClaimAccountClientFromPrivateKey(privateKeyHex);
+  const { aa } = await createGoClaimAccountClientFromPrivateKey(privateKeyHex);
 
-  const userOpHash = await goClaimAccountClient.sendUserOperation({
-    calls: [
+  const result = await aa.sendPreparedFlow({
+    preparedFlow: true,
+    chainId: celo.id,
+    from: aa.smartAccountAddress,
+    summary,
+    steps: [
       {
+        kind: "contract",
         to: GOCLAIM_PROXY_ADDRESS,
-        data: appendDataSuffix(data),
+        data,
+        description: summary,
       },
     ],
   });
 
-  const receipt = await goClaimAccountClient.waitForUserOperationReceipt({
-    hash: userOpHash,
-  });
-
-  if (!receipt.success) {
+  if (!result.success) {
     throw new Error("GoClaim log UserOp failed");
   }
 
   return {
-    userOpHash,
-    transactionHash: receipt.receipt.transactionHash,
+    userOpHash: result.userOpHashes[0]!,
+    transactionHash: result.transactionHashes[0]!,
   };
 }
 
@@ -62,7 +64,7 @@ export async function submitLogAccountCreated(
     args: [goClaimAccountAddress, nonce, signature],
   });
 
-  return sendGoClaimUserOp(privateKeyHex, data);
+  return sendGoClaimUserOp(privateKeyHex, data, "GoClaim logAccountCreated");
 }
 
 export async function submitLogAccountConnected(
@@ -85,7 +87,7 @@ export async function submitLogAccountConnected(
     args: [goClaimAccountAddress, whitelistedRoot, nonce, signature],
   });
 
-  return sendGoClaimUserOp(privateKeyHex, data);
+  return sendGoClaimUserOp(privateKeyHex, data, "GoClaim logAccountConnected");
 }
 
 export {
