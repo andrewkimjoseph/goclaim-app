@@ -5,7 +5,7 @@
 ## 1. Neon Postgres
 
 1. Create a Neon project and copy `DATABASE_URL`
-2. Run migrations: `npx prisma migrate deploy`
+2. Run migrations **outside** the Vercel build: `npx prisma migrate deploy` (when the Neon compute is awake). Vercel’s `buildCommand` only runs `prisma generate && next build` — `migrate deploy` during build fails with `P1001` if Neon is suspended.
 
 ## 2. Upstash Redis
 
