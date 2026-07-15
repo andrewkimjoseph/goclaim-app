@@ -43,10 +43,14 @@ model ClaimLog {
   txHash                    String?
   errorMsg                  String?
   claimedAt                 DateTime                    @default(now())
+  claimedDate               DateTime                    @db.Date
   waveIndex                 Int?
   transfer                  TransferLog?
   goClaimUbiClaimedLog      GoClaimUbiClaimedLog?
   goClaimTokenTransferredLog GoClaimTokenTransferredLog?
+
+  @@unique([userId, claimedDate])
+  @@index([userId, claimedDate])
 }
 
 model TransferLog {
