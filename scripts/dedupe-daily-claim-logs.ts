@@ -3,14 +3,41 @@
  * Keeps the best row (success with children preferred). Deletes losers and their
  * TransferLog / GoClaimUbiClaimedLog / GoClaimTokenTransferredLog children first.
  *
- * Usage (before migrating claimedDate unique index if duplicates exist):
- *   npm run dedupe:daily-claim-logs
+ * Run BEFORE `prisma migrate deploy` for claimedDate if duplicates exist.
  *
- * Dry run:
+ * Usage:
+ *   npm run dedupe:daily-claim-logs
  *   DRY_RUN=1 npm run dedupe:daily-claim-logs
  */
-import { prisma } from "@/lib/prisma";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { utcClaimedDateKey } from "@/lib/claimDate";
+
+/** Load Next.js-style env files so DATABASE_URL is available under tsx. */
+function loadEnvFile(name: string): void {
+  const path = resolve(process.cwd(), name);
+  if (!existsSync(path)) return;
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFile(".env");
+loadEnvFile(".env.local");
 
 type ClaimRow = {
   id: string;
@@ -27,7 +54,6 @@ function score(row: ClaimRow): number {
   const hasTransfer = row.transfer ? 100 : 0;
   const hasUbi = row.goClaimUbiClaimedLog ? 10 : 0;
   const hasToken = row.goClaimTokenTransferredLog ? 1 : 0;
-  // Prefer earlier success (stable first claim); among non-success prefer latest
   const timeBias =
     row.status === "success"
       ? -row.claimedAt.getTime() / 1e13
@@ -40,15 +66,28 @@ function pickKeep(rows: ClaimRow[]): ClaimRow {
 }
 
 async function main() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is not set. Add it to .env.local (or export it) and retry."
+    );
+  }
+
+  const { prisma } = await import("@/lib/prisma");
   const dryRun = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true";
-  const logs = await prisma.claimLog.findMany({
-    include: {
+
+  // Explicit select omits claimedDate so this works before the unique-daily migration.
+  const logs = (await prisma.claimLog.findMany({
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      claimedAt: true,
       transfer: { select: { id: true } },
       goClaimUbiClaimedLog: { select: { id: true } },
       goClaimTokenTransferredLog: { select: { id: true } },
     },
     orderBy: { claimedAt: "asc" },
-  });
+  })) as ClaimRow[];
 
   const groups = new Map<string, ClaimRow[]>();
   for (const log of logs) {

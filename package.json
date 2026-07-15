@@ -17,7 +17,7 @@
     "claim-test": "tsx scripts/claim-test.ts",
     "rotate-keys": "tsx scripts/rotate-keys.ts",
     "backfill:goclaim-logs": "tsx scripts/backfill-goClaim-event-logs.ts",
-    "dedupe:daily-claim-logs": "tsx scripts/dedupe-daily-claim-logs.ts",
+    "dedupe:daily-claim-logs": "tsx --env-file=.env.local scripts/dedupe-daily-claim-logs.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
