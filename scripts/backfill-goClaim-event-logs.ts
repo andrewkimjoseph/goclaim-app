@@ -4,6 +4,7 @@
  *
  * Usage: npm run backfill:goclaim-logs
  */
+import "@/lib/loadEnv";
 import { type Address } from "viem";
 import { prisma } from "@/lib/prisma";
 import {

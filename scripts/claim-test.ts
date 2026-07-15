@@ -2,6 +2,7 @@
  * Manual end-to-end claim test for a single userId.
  * Usage: USER_ID=... npm run claim-test
  */
+import "@/lib/loadEnv";
 import { prisma } from "@/lib/prisma";
 import { processClaim } from "@/worker/jobs/processClaim";
 

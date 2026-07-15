@@ -9,35 +9,9 @@
  *   npm run dedupe:daily-claim-logs
  *   DRY_RUN=1 npm run dedupe:daily-claim-logs
  */
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import "@/lib/loadEnv";
+import { prisma } from "@/lib/prisma";
 import { utcClaimedDateKey } from "@/lib/claimDate";
-
-/** Load Next.js-style env files so DATABASE_URL is available under tsx. */
-function loadEnvFile(name: string): void {
-  const path = resolve(process.cwd(), name);
-  if (!existsSync(path)) return;
-  for (const line of readFileSync(path, "utf8").split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-    }
-  }
-}
-
-loadEnvFile(".env");
-loadEnvFile(".env.local");
 
 type ClaimRow = {
   id: string;
@@ -72,7 +46,6 @@ async function main() {
     );
   }
 
-  const { prisma } = await import("@/lib/prisma");
   const dryRun = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true";
 
   // Explicit select omits claimedDate so this works before the unique-daily migration.

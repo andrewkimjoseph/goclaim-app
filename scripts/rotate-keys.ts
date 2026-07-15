@@ -2,6 +2,7 @@
  * Master key rotation stub — decrypt with OLD_MASTER_KEY, re-encrypt with NEW_MASTER_KEY.
  * Run manually during key rotation windows.
  */
+import "@/lib/loadEnv";
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 

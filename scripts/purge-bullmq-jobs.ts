@@ -5,6 +5,7 @@
  * Usage: npm run queue:purge
  * Do not run while jobs are in-flight.
  */
+import "@/lib/loadEnv";
 import { getClaimQueue } from "@/lib/queue";
 
 async function cleanAll(status: "completed" | "failed") {
