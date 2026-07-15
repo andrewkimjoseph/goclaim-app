@@ -7,7 +7,7 @@ import {
 import { identityAbi } from "./abis/identity";
 import { IDENTITY_PROXY_ADDRESS } from "./constants";
 import { publicClient } from "./config";
-import { stripDataSuffix } from "./attribution";
+import { stripCelinaAttributionCalldata } from "./attribution";
 import { getLinkStatus } from "./eligibility";
 
 function isTransactionNotFoundError(error: unknown): boolean {
@@ -62,7 +62,7 @@ async function verifyConnectAccountTxDetails({
     throw new Error("Transaction was not sent to GoodDollar identity contract");
   }
 
-  const calldata = stripDataSuffix(tx.input as Hex);
+  const calldata = stripCelinaAttributionCalldata(tx.input as Hex);
   const decoded = decodeFunctionData({
     abi: identityAbi,
     data: calldata,

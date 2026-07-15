@@ -7,10 +7,7 @@ import {
 import { celo } from "viem/chains";
 import { getWalletClient } from "wagmi/actions";
 import { config } from "@/lib/wagmi";
-import {
-  encodeTaggedConnectAccount,
-  IDENTITY_CONNECT_TARGET,
-} from "./identityConnect";
+import { prepareConnectAccount } from "./celinaBrowser";
 
 const drpcKey = process.env.NEXT_PUBLIC_DRPC_API_KEY;
 
@@ -19,6 +16,10 @@ export const browserPublicClient = createPublicClient({
   transport: drpcKey ? http(`https://lb.drpc.live/celo/${drpcKey}`) : http(),
 });
 
+/**
+ * Broadcast Identity.connectAccount via wagmi, using Celina prepareFunction
+ * (same encode+tag path as MCP execute_contract_function).
+ */
 export async function sendTaggedConnectAccount({
   account,
   goClaimAccountAddress,
@@ -31,9 +32,16 @@ export async function sendTaggedConnectAccount({
     throw new Error("Connect your wallet first.");
   }
 
+  const prepared = await prepareConnectAccount(account, goClaimAccountAddress);
+  const step = prepared.steps[0];
+  if (!step?.to || !step.data) {
+    throw new Error("Celina prepareFunction returned no connectAccount step.");
+  }
+
   return walletClient.sendTransaction({
     account,
-    to: IDENTITY_CONNECT_TARGET,
-    data: encodeTaggedConnectAccount(goClaimAccountAddress),
+    to: step.to,
+    data: step.data,
+    value: BigInt(step.value ?? "0"),
   });
 }
