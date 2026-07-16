@@ -1,5 +1,5 @@
 import "@/lib/loadEnv";
-import { getRedisHostForLog } from "../lib/queue";
+import { getRedisHostForLog } from "@/lib/queue";
 import { createClaimWorker } from "./createClaimWorker";
 
 if (
