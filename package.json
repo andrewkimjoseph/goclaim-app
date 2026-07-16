@@ -1,6 +1,6 @@
 {
   "name": "goclaim-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "engines": {
@@ -25,7 +25,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@andrewkimjoseph/celina-sdk": "0.15.6",
+    "@andrewkimjoseph/celina-sdk": "0.15.7",
     "@goodsdks/identity-sdk": "^1.0.5",
     "@prisma/client": "^5.22.0",
     "@rainbow-me/rainbowkit": "^2.2.11",
