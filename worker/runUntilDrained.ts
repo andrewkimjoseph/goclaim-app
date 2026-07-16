@@ -1,5 +1,5 @@
-import "@/lib/loadEnv";
-import { getClaimQueue, getRedisHostForLog } from "@/lib/queue";
+import "../lib/loadEnv";
+import { getClaimQueue, getRedisHostForLog } from "../lib/queue";
 import { createClaimWorker } from "./createClaimWorker";
 import { getWorkerTuning } from "./workerConfig";
 

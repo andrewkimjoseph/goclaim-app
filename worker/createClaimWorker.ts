@@ -1,5 +1,5 @@
 import { Worker, type WorkerOptions } from "bullmq";
-import { CLAIM_QUEUE_NAME, getRedisHostForLog } from "@/lib/queue";
+import { CLAIM_QUEUE_NAME, getRedisHostForLog } from "../lib/queue";
 import { processClaim } from "./jobs/processClaim";
 import { getWorkerOptions, getWorkerTuning } from "./workerConfig";
 

@@ -1,13 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { type Address, type Hex } from "viem";
-import { decryptPrivateKey } from "@/lib/crypto";
-import { prisma } from "@/lib/prisma";
-import { utcClaimedDate } from "@/lib/claimDate";
-import { claimUbi } from "@/lib/onchain/claimUbi";
-import { checkUbiClaimEligibility } from "@/lib/onchain/eligibility";
-import { GOOD_DOLLAR_TOKEN_ADDRESS } from "@/lib/onchain/constants";
-import { createClaimGoClaimEventLogs } from "@/lib/onchain/goClaim/persistEventLog";
-import type { ClaimJobData } from "@/lib/queue";
+import { decryptPrivateKey } from "../../lib/crypto";
+import { prisma } from "../../lib/prisma";
+import { utcClaimedDate } from "../../lib/claimDate";
+import { claimUbi } from "../../lib/onchain/claimUbi";
+import { checkUbiClaimEligibility } from "../../lib/onchain/eligibility";
+import { GOOD_DOLLAR_TOKEN_ADDRESS } from "../../lib/onchain/constants";
+import { createClaimGoClaimEventLogs } from "../../lib/onchain/goClaim/persistEventLog";
+import type { ClaimJobData } from "../../lib/queue";
 
 const CLAIM_TIMEOUT_MS = 45_000;
 

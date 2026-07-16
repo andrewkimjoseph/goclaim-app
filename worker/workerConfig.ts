@@ -1,5 +1,5 @@
 import type { WorkerOptions } from "bullmq";
-import { getRedisConnection } from "@/lib/queue";
+import { getRedisConnection } from "../lib/queue";
 
 export function getWorkerTuning() {
   return {
