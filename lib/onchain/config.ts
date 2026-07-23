@@ -1,11 +1,11 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient } from "viem";
 import { celo } from "viem/chains";
+import {
+  createCeloRpcTransport,
+  resolveServerRpcUrl,
+} from "./rpcTransport";
 
-const DRPC_API_KEY = process.env.DRPC_API_KEY;
-
-export const rpcUrl = DRPC_API_KEY
-  ? `https://lb.drpc.live/celo/${DRPC_API_KEY}`
-  : undefined;
+export const rpcUrl = resolveServerRpcUrl();
 
 export function getPimlicoApiKey(): string {
   const key = process.env.PIMLICO_API_KEY?.trim();
@@ -17,5 +17,5 @@ export function getPimlicoApiKey(): string {
 
 export const publicClient = createPublicClient({
   chain: celo,
-  transport: http(rpcUrl),
+  transport: createCeloRpcTransport(rpcUrl),
 });

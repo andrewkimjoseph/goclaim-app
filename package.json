@@ -18,6 +18,7 @@
     "rotate-keys": "tsx scripts/rotate-keys.ts",
     "backfill:goclaim-logs": "tsx scripts/backfill-goClaim-event-logs.ts",
     "dedupe:daily-claim-logs": "tsx scripts/dedupe-daily-claim-logs.ts",
+    "purge:failed-claim-logs": "tsx scripts/purge-failed-claim-logs.ts",
     "db:migrate": "tsx scripts/run-with-env.ts ./node_modules/.bin/prisma migrate dev",
     "db:deploy": "tsx scripts/run-with-env.ts ./node_modules/.bin/prisma migrate deploy",
     "db:generate": "tsx scripts/run-with-env.ts ./node_modules/.bin/prisma generate",

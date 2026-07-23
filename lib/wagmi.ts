@@ -6,13 +6,14 @@ import {
   valoraWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { http, createConfig } from "wagmi";
+import { createConfig } from "wagmi";
 import { celo } from "wagmi/chains";
+import {
+  createCeloRpcTransport,
+  resolveBrowserRpcUrl,
+} from "@/lib/onchain/rpcTransport";
 
-const drpcKey = process.env.NEXT_PUBLIC_DRPC_API_KEY;
-const celoTransport = drpcKey
-  ? http(`https://lb.drpc.live/celo/${drpcKey}`)
-  : http();
+const celoTransport = createCeloRpcTransport(resolveBrowserRpcUrl());
 
 const walletConnectProjectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";

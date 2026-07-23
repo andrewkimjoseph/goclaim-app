@@ -1,6 +1,5 @@
 import {
   createPublicClient,
-  http,
   type Address,
   type Hash,
   type Hex,
@@ -8,12 +7,14 @@ import {
 import { celo } from "viem/chains";
 import { getWalletClient } from "wagmi/actions";
 import { config } from "@/lib/wagmi";
-
-const drpcKey = process.env.NEXT_PUBLIC_DRPC_API_KEY;
+import {
+  createCeloRpcTransport,
+  resolveBrowserRpcUrl,
+} from "@/lib/onchain/rpcTransport";
 
 export const browserPublicClient = createPublicClient({
   chain: celo,
-  transport: drpcKey ? http(`https://lb.drpc.live/celo/${drpcKey}`) : http(),
+  transport: createCeloRpcTransport(resolveBrowserRpcUrl()),
 });
 
 /**
