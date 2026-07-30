@@ -47,6 +47,7 @@ Env vars:
 - `PIMLICO_API_KEY` (**required** — Pimlico bundler + paymaster for `GoClaimAccountCreated` and `GoClaimAccountConnected` UserOps on `POST /api/goclaim/create` and `POST /api/goclaim/connect-log`; use the same key as Railway)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (**required for mobile web** — WalletConnect in Chrome/Safari; get a project ID from [WalletConnect Cloud](https://cloud.walletconnect.com))
 - `APP_PRIVATE_KEY` (GoClaim EIP-712 signer; **required** — must match on-chain `goClaimSigner`. Used for `GoClaimAccountCreated` and `GoClaimAccountConnected` UserOps on create/connect.)
+- `NEXT_PUBLIC_MARKETING_SITE_URL` (optional — CORS origin for `POST /api/g-usdm-quote`; defaults to `https://goclaim.xyz`)
 
 Deploy: connect repo, build uses `vercel.json`.
 
