@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type ReactNode } from "react";
+import { GdUsdmHoverFigure } from "@/components/GdUsdmHoverFigure";
 import { formatClaimStatus } from "@/lib/formatClaimStatus";
 import { copy } from "@/lib/copy";
 import {
@@ -17,6 +18,7 @@ export type ClaimLog = {
   claimedAt: string;
   transfer?: {
     amountGd: string;
+    amountUsdm?: string | null;
   } | null;
 };
 
@@ -89,7 +91,19 @@ function ClaimHistoryPreviewTable({ rows }: { rows: NumberedClaimRow[] }) {
                 </span>
               </ClaimHistoryCell>
               <ClaimHistoryCell className="max-w-[7rem] truncate">
-                {log.transfer?.amountGd ?? "—"}
+                {log.transfer?.amountGd != null ? (
+                  log.transfer.amountUsdm != null ? (
+                    <GdUsdmHoverFigure
+                      gdAmount={log.transfer.amountGd}
+                      usdmAmount={log.transfer.amountUsdm}
+                      currencyClassName="decoration-primary/30"
+                    />
+                  ) : (
+                    log.transfer.amountGd
+                  )
+                ) : (
+                  "—"
+                )}
               </ClaimHistoryCell>
               <ClaimHistoryCell className="pr-0">
                 {log.txHash ? (

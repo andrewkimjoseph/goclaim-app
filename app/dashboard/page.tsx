@@ -233,7 +233,9 @@ export default function DashboardPage() {
               <>
                 <DashboardOverviewCard
                   lifetimeGdClaimed={status.lifetimeGdClaimed ?? "0"}
+                  lifetimeGdClaimedUsdm={status.lifetimeGdClaimedUsdm}
                   rootGdBalance={status.rootGdBalance ?? null}
+                  rootGdBalanceUsdm={status.rootGdBalanceUsdm}
                   lastClaimedAt={status.lastClaimedAt}
                   streak={status.claimStreak ?? 0}
                   onStreakOpen={() => setShowStreakModal(true)}

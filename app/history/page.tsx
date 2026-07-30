@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ClaimHistoryTable } from "@/components/ClaimHistoryTable";
+import { GdUsdmHoverFigure } from "@/components/GdUsdmHoverFigure";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useGoClaimStatus, UnauthorizedError } from "@/lib/hooks/useGoClaimStatus";
 import { useSession } from "@/lib/hooks/useSession";
@@ -80,7 +81,19 @@ export default function HistoryPage() {
                 />
                 {copy.dashboard.streakDays(status.claimStreak ?? 0)}
               </span>
-              {copy.goClaimHistory.pageSummaryGdSent(status.lifetimeGdClaimed ?? "0")}
+              <span aria-hidden>·</span>
+              {status.lifetimeGdClaimedUsdm != null ? (
+                <span className="inline-flex items-baseline gap-1">
+                  <GdUsdmHoverFigure
+                    gdAmount={status.lifetimeGdClaimed ?? "0"}
+                    usdmAmount={status.lifetimeGdClaimedUsdm}
+                    currencyClassName="decoration-white/40"
+                  />
+                  <span> sent</span>
+                </span>
+              ) : (
+                copy.goClaimHistory.pageSummaryGdSent(status.lifetimeGdClaimed ?? "0")
+              )}
             </p>
           )}
         </div>
