@@ -18,8 +18,10 @@ export type GoClaimStatus = {
   linkComplete?: boolean;
   lifetimeClaims?: number;
   lifetimeGdClaimed?: string;
+  lifetimeGdClaimedUsdm?: string | null;
   claimStreak?: number;
   rootGdBalance?: string | null;
+  rootGdBalanceUsdm?: string | null;
   claimLogs?: ClaimLog[];
 };
 
