@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { type Address } from "viem";
+import { isAccountCreationEnabled } from "@/lib/accountCreation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLinkStatus } from "@/lib/onchain/eligibility";
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({
       hasGoClaimAccount: false,
+      accountCreationEnabled: isAccountCreationEnabled(),
       rootAddress: user.rootAddress,
       rootGdBalance,
       rootGdBalanceUsdm,
@@ -154,6 +156,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     hasGoClaimAccount: true,
+    accountCreationEnabled: isAccountCreationEnabled(),
     rootAddress: user.rootAddress,
     goClaimAccountAddress,
     isCounterfactual: !isDeployed,

@@ -5,6 +5,7 @@ import type { ClaimLog } from "@/components/ClaimHistoryTable";
 
 export type GoClaimStatus = {
   hasGoClaimAccount: boolean;
+  accountCreationEnabled?: boolean;
   rootAddress?: string;
   goClaimAccountAddress?: string;
   goClaimEventLogs?: {

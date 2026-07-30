@@ -1,5 +1,9 @@
 import { type Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
+import {
+  AccountCreationPausedError,
+  isAccountCreationEnabled,
+} from "@/lib/accountCreation";
 import { encryptPrivateKey } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
 import { deriveGoClaimAccount } from "./deriveGoClaimAccount";
@@ -20,6 +24,10 @@ export async function createGoClaimWallet(userId: string) {
       linkStatus: "pending" as const,
       isNew: false as const,
     };
+  }
+
+  if (!isAccountCreationEnabled()) {
+    throw new AccountCreationPausedError();
   }
 
   const privateKey = generatePrivateKey();

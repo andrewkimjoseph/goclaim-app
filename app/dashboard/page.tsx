@@ -89,10 +89,13 @@ export default function DashboardPage() {
   async function handleSetupGoClaim() {
     setIsCreatingGoClaimAccount(true);
     try {
-      await fetch("/api/goclaim/create", {
+      const res = await fetch("/api/goclaim/create", {
         method: "POST",
         credentials: "include",
       });
+      if (!res.ok) {
+        return;
+      }
       const { data: refreshedStatus } = await fetchStatus();
       const refreshedGoClaimAccountAddress =
         refreshedStatus?.goClaimAccountAddress;
@@ -109,11 +112,15 @@ export default function DashboardPage() {
 
   const linkStatus = status?.linkStatus ?? "pending";
   const showError = Boolean(error) && !(error instanceof UnauthorizedError);
+  const accountCreationEnabled = status?.accountCreationEnabled !== false;
   const showNoGoClaimAccountSetup = Boolean(
-    status && !status.hasGoClaimAccount && !showError
+    status && !status.hasGoClaimAccount && !showError && accountCreationEnabled
+  );
+  const showCreationPaused = Boolean(
+    status && !status.hasGoClaimAccount && !showError && !accountCreationEnabled
   );
   const isInitialStatusLoad = isLoading && !status;
-  const useSetupLayout = showNoGoClaimAccountSetup;
+  const useSetupLayout = showNoGoClaimAccountSetup || showCreationPaused;
 
   if (!checked || !authenticated || isInitialStatusLoad) {
     return (
@@ -172,6 +179,13 @@ export default function DashboardPage() {
             <button onClick={() => fetchStatus()} className="btn-hero-primary">
               {copy.dashboard.retry}
             </button>
+          </div>
+        ) : showCreationPaused ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-10 px-1 min-h-0 overflow-y-auto overscroll-contain">
+            <GettingStartedHero
+              headline={copy.dashboard.creationPausedHeadline}
+              subhead={copy.dashboard.creationPausedSubhead}
+            />
           </div>
         ) : showNoGoClaimAccountSetup ? (
           <>

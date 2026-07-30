@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AccountCreationPausedError } from "@/lib/accountCreation";
 import { getSession } from "@/lib/auth";
 import { createGoClaimWallet } from "@/lib/onchain/goClaimWallet";
 import { ensureGoClaimAccountCreatedLog } from "@/lib/onchain/goClaim/persistEventLog";
@@ -32,6 +33,12 @@ export async function POST() {
       ...(goClaimAccountCreatedLog ? { goClaimAccountCreatedLog } : {}),
     });
   } catch (error) {
+    if (error instanceof AccountCreationPausedError) {
+      return NextResponse.json(
+        { code: error.code, error: error.message },
+        { status: 403 }
+      );
+    }
     const message =
       error instanceof Error ? error.message : "Failed to create GoClaim wallet";
     return NextResponse.json({ error: message }, { status: 500 });

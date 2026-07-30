@@ -92,6 +92,9 @@ export const copy = {
     settingUpGoClaim: "Setting up account...",
     setupHeadline: "Set up GoClaim",
     setupSubhead: "Create account, approve once in GoodDollar.",
+    creationPausedHeadline: "Account creation paused",
+    creationPausedSubhead:
+      "GoClaim is not creating new accounts indefinitely. Existing accounts are unaffected.",
     setupStepsTitle: "How it works",
     setupSteps: [
       {
