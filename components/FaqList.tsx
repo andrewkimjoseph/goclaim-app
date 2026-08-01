@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { copy } from "@/lib/copy";
+import type { FaqItem } from "@/lib/copy";
 
 function FaqItem({
   question,
@@ -56,12 +56,12 @@ function FaqItem({
   );
 }
 
-export function FaqList() {
+export function FaqList({ items }: { items: FaqItem[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <div className="space-y-3">
-      {copy.faqs.items.map((item, index) => (
+      {items.map((item, index) => (
         <FaqItem
           key={item.question}
           question={item.question}

@@ -1,3 +1,6 @@
+export const ACCOUNT_CREATION_PAUSED_NOTE =
+  "GoClaim is not registering new accounts at the moment. Existing accounts are unaffected.";
+
 export const copy = {
   links: {
     websiteUrl: "https://goclaim.xyz",
@@ -93,8 +96,7 @@ export const copy = {
     setupHeadline: "Set up GoClaim",
     setupSubhead: "Create account, approve once in GoodDollar.",
     creationPausedHeadline: "Account creation paused",
-    creationPausedSubhead:
-      "GoClaim is not creating new accounts indefinitely. Existing accounts are unaffected.",
+    creationPausedSubhead: ACCOUNT_CREATION_PAUSED_NOTE,
     setupStepsTitle: "How it works",
     setupSteps: [
       {
@@ -230,6 +232,37 @@ export const copy = {
     ],
   },
 } as const;
+
+export type FaqItem = { question: string; answer: string };
+
+const ACCOUNT_CREATION_FAQ_Q = "Can I create a new GoClaim account?";
+const SETUP_FAQ_Q = "How does setup work?";
+
+export function getFaqItems(accountCreationEnabled: boolean): FaqItem[] {
+  const accountCreationFaq: FaqItem = {
+    question: ACCOUNT_CREATION_FAQ_Q,
+    answer: accountCreationEnabled
+      ? "Yes. Connect your GoodDollar-verified root wallet on Celo, sign in, and complete the one-time setup."
+      : `${ACCOUNT_CREATION_PAUSED_NOTE} You can still sign in and finish setup if you already have a GoClaim account.`,
+  };
+
+  const items = copy.faqs.items.map((item) => {
+    if (item.question === SETUP_FAQ_Q && !accountCreationEnabled) {
+      return {
+        ...item,
+        answer:
+          "If you already have a GoClaim account: connect your wallet, sign in, then link your GoClaim account to GoodDollar once. New account registration is paused at the moment.",
+      };
+    }
+    return { ...item };
+  });
+
+  const whoCanUseIndex = items.findIndex(
+    (item) => item.question === "Who can use it?",
+  );
+  items.splice(whoCanUseIndex + 1, 0, accountCreationFaq);
+  return items;
+}
 
 /** Client-only: UTC schedule plus local equivalent when in browser. */
 export function formatClaimSchedule(): string {

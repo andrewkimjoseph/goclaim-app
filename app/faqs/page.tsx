@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { FaqHeaderNav } from "@/components/FaqHeaderNav";
 import { FaqList } from "@/components/FaqList";
-import { copy } from "@/lib/copy";
+import { isAccountCreationEnabled } from "@/lib/accountCreation";
+import { copy, getFaqItems } from "@/lib/copy";
 
 export const metadata: Metadata = {
   title: "FAQs | GoClaim",
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function FaqsPage() {
+  const items = getFaqItems(isAccountCreationEnabled());
+
   return (
     <div className="app-shell app-shell-pinned">
       <FaqHeaderNav />
@@ -21,7 +24,7 @@ export default function FaqsPage() {
           <p className="text-sm text-white/80">{copy.faqs.subtitle}</p>
         </div>
 
-        <FaqList />
+        <FaqList items={items} />
       </main>
     </div>
   );
