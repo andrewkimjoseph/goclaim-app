@@ -28,7 +28,7 @@
   "dependencies": {
     "@andrewkimjoseph/celina-sdk": "0.25.1",
     "@goodsdks/identity-sdk": "^1.0.5",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.9.1",
     "@rainbow-me/rainbowkit": "^2.2.11",
     "@tanstack/react-query": "^5.101.1",
     "bullmq": "^5.79.1",
@@ -48,7 +48,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.9",
     "postcss": "^8",
-    "prisma": "^5.22.0",
+    "prisma": "^7.9.1",
     "sharp": "^0.35.2",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.22.4",
