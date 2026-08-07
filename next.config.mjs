@@ -36,7 +36,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  serverExternalPackages: ["pino-pretty", "lokijs", "encoding"],
+  serverExternalPackages: ["pino-pretty", "lokijs", "encoding", "pg", "@prisma/adapter-pg"],
   compiler: {
     define: {
       __DEV__: JSON.stringify(process.env.NODE_ENV !== "production"),
