@@ -1,5 +1,5 @@
 import { type Hex } from "viem";
-import { createAAClient, type AAClient } from "@andrewkimjoseph/celina-sdk";
+import { createAAClient, type AAClient } from "@andrewkimjoseph/celina-sdk/aa";
 import { getPimlicoApiKey, publicClient } from "./config";
 
 export type GoClaimAccountClientBundle = {
