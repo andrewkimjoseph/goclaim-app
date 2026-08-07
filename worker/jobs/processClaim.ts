@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { type Address, type Hex } from "viem";
 import { decryptPrivateKey } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";

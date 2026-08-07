@@ -3,7 +3,7 @@
  * Run manually during key rotation windows.
  */
 import "@/lib/loadEnv";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
@@ -47,7 +47,6 @@ async function main() {
     throw new Error("Set OLD_MASTER_KEY and NEW_MASTER_KEY");
   }
 
-  const prisma = new PrismaClient();
   const wallets = await prisma.goClaimWallet.findMany();
 
   for (const wallet of wallets) {

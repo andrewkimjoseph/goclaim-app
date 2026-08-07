@@ -1,5 +1,5 @@
 import { type Address, type Hash } from "viem";
-import { type Prisma } from "@prisma/client";
+import { type Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { goClaimAbi } from "../abis/goClaim";
 import { GOCLAIM_PROXY_ADDRESS } from "../constants";
