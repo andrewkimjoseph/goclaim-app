@@ -4,7 +4,7 @@
 
 ## 1. Neon Postgres
 
-1. Create a Neon project and copy `DATABASE_URL`
+1. Create a Neon project and copy `DATABASE_URL`. Prefer `sslmode=verify-full`; Neon’s default `sslmode=require` is rewritten in `lib/prisma.ts` so the `pg` SSL-mode warning does not appear in worker logs.
 2. Run migrations **outside** the Vercel build: `npx prisma migrate deploy` (when the Neon compute is awake). Vercel’s `buildCommand` only runs `prisma generate && next build` — `migrate deploy` during build fails with `P1001` if Neon is suspended.
 
 ## 2. Upstash Redis

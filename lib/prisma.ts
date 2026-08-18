@@ -7,10 +7,21 @@ const globalForPrisma = globalThis as unknown as {
   pgPool: Pool | undefined;
 };
 
+/** pg currently aliases sslmode=require to verify-full and warns; pin verify-full. */
+function withVerifyFullSsl(connectionString: string): string {
+  if (/[?&]sslmode=/i.test(connectionString)) {
+    return connectionString.replace(/([?&]sslmode=)[^&]*/i, "$1verify-full");
+  }
+  const sep = connectionString.includes("?") ? "&" : "?";
+  return `${connectionString}${sep}sslmode=verify-full`;
+}
+
 function createPrismaClient(): PrismaClient {
   const pool =
     globalForPrisma.pgPool ??
-    new Pool({ connectionString: process.env.DATABASE_URL });
+    new Pool({
+      connectionString: withVerifyFullSsl(process.env.DATABASE_URL ?? ""),
+    });
 
   if (process.env.NODE_ENV !== "production") {
     globalForPrisma.pgPool = pool;
