@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "worker": "tsx worker/index.ts",
     "worker:drain": "tsx worker/runUntilDrained.ts",
+    "worker:trigger-drain": "tsx scripts/trigger-and-drain.ts",
     "queue:purge": "tsx scripts/purge-bullmq-jobs.ts",
     "claim-test": "tsx scripts/claim-test.ts",
     "rotate-keys": "tsx scripts/rotate-keys.ts",
