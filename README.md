@@ -168,7 +168,7 @@ For a single-user claim test (preferred over running the worker locally against 
 USER_ID=<cuid> npm run claim-test
 ```
 
-To test the full queue locally, enqueue via curl then run `npm run worker:drain`. For a long-running local worker, use `npm run worker`. See [DEPLOY.md](./DEPLOY.md).
+To test the full queue locally, enqueue via curl then run `npm run worker:drain`, or use `npm run worker:trigger-drain`. For a long-running local worker, use `npm run worker`. See [DEPLOY.md](./DEPLOY.md).
 
 ## Scripts
 
@@ -178,6 +178,8 @@ To test the full queue locally, enqueue via curl then run `npm run worker:drain`
 | `npm run build` | Production build |
 | `npm run worker` | Long-running BullMQ worker (local/manual) |
 | `npm run worker:drain` | Process queue until empty, then exit |
+| `npm run worker:trigger-drain` | Manual prod enqueue + local drain (not for scheduled use while Railway is on) |
+| `./scripts/run-trigger-and-drain.sh` | Local wrapper for trigger-drain (logs to `logs/`) |
 | `npm run queue:purge` | One-time cleanup of stale Redis job records |
 | `npm run claim-test` | Manual claim for one user (`USER_ID=...`) |
 | `npm run db:migrate` | Run Prisma migrations |

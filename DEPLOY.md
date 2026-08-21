@@ -95,11 +95,9 @@ cronSchedule = "0 12 * * *"
 
 Runtime budget: with concurrency 5 and ~30–45s per claim, 100 users ≈ 10 min, 500 users ≈ 50 min. Increase `WORKER_MAX_RUN_MS` if batches grow.
 
-Local queue testing uses `npm run worker` or `npm run worker:drain` — not Railway.
+Do **not** install a Mac crontab for the same schedule while Railway is active — that double-enqueues claims.
 
 ### Fresh Railway setup
-
-If migrating from the old two-service layout (always-on worker + cron), delete both existing Railway services and create one new service:
 
 1. Railway → **New service** → deploy from the GoClaim GitHub repo.
 2. Do **not** set a custom Railway Config File path — the default `railway.toml` at repo root is correct.
@@ -129,7 +127,7 @@ startCommand = 'node -e "fetch(process.env.NEXT_PUBLIC_APP_URL+\"/api/internal/t
 - **`NEXT_PUBLIC_APP_URL` / `CRON_SECRET` missing or mismatched** with Vercel.
 - **Missing worker env vars** (`UPSTASH_REDIS_URL`, `DATABASE_URL`, etc.) — drain step will fail after curl succeeds.
 
-### Manual trigger + drain
+### Manual trigger + drain (local)
 
 Enqueue only (jobs sit until next cron or manual drain):
 
@@ -142,6 +140,14 @@ Process enqueued jobs locally:
 
 ```bash
 npm run worker:drain
+```
+
+One-shot prod enqueue + local drain (requires `.env.local`; do not cron this while Railway is on):
+
+```bash
+npm run worker:trigger-drain
+# or
+./scripts/run-trigger-and-drain.sh
 ```
 
 ## 6. GoClaim on-chain logger contract

@@ -20,6 +20,9 @@ node_modules/
 .DS_Store
 *.pem
 
+# local cron / worker logs
+/logs/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

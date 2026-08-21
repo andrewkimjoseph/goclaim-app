@@ -1,0 +1,9 @@
+# OPTIONAL local Mac crontab — only if Railway cron is disabled.
+# Production daily claims run on Railway (see railway.toml / DEPLOY.md §5).
+# Installing this while Railway is active will double-enqueue claims.
+#
+# Install with: crontab -e  (paste below; keep TZ=UTC). Verify: crontab -l
+# Logs (if used): goclaim-app/logs/cron-trigger-drain.log
+
+TZ=UTC
+0 12 * * * /Users/andi/canvassing/goclaim-app/scripts/run-trigger-and-drain.sh
