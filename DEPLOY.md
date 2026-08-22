@@ -69,12 +69,12 @@ buildCommand = "node_modules/.bin/prisma generate"
 [deploy]
 startCommand = 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET" && node_modules/.bin/tsx worker/runUntilDrained.ts'
 restartPolicyType = "NEVER"
-cronSchedule = "0 12 * * *"
+cronSchedule = "0 15 * * *"
 ```
 
 - `buildCommand` runs `prisma generate` only — **not** `next build` (that runs on Vercel).
 - `restartPolicyType = "NEVER"` — cron runs once and exits; always-on restart policies prevent scheduling.
-- `cronSchedule = "0 12 * * *"` — daily at 12:00 UTC.
+- `cronSchedule = "0 15 * * *"` — daily at 15:00 UTC.
 - Start command enqueues via `curl`, then runs `worker/runUntilDrained.ts`. `-f` on curl exits non-zero on HTTP 4xx/5xx so a failed trigger skips the worker.
 
 ### Env vars (Railway service)

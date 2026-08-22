@@ -5,4 +5,4 @@ buildCommand = "node_modules/.bin/prisma generate"
 [deploy]
 startCommand = 'curl -sf -X POST "$NEXT_PUBLIC_APP_URL/api/internal/trigger-claims" -H "Authorization: Bearer $CRON_SECRET" && node_modules/.bin/tsx worker/runUntilDrained.ts'
 restartPolicyType = "NEVER"
-cronSchedule = "0 12 * * *"
+cronSchedule = "0 15 * * *"
