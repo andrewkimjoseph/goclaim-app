@@ -1,28 +1,49 @@
 /**
- * Delete all ClaimLog rows for today's UTC claimedDate (and child transfer/event
- * logs) so the unique (userId, claimedDate) slot can be reused by another cron.
+ * Delete ClaimLog rows for a UTC claimedDate (and child transfer/event logs)
+ * so the unique (userId, claimedDate) slot can be reused by another cron.
  *
  * Also clears GoClaimWallet.lastClaimedAt when it falls on that same UTC day.
  *
  * Usage:
- *   npm run purge:todays-claim-logs
- *   DRY_RUN=1 npm run purge:todays-claim-logs
- *   CLAIMED_DATE=2026-08-21 npm run purge:todays-claim-logs   # optional override (UTC YYYY-MM-DD)
+ *   npm run purge:claim-logs
+ *   DRY_RUN=1 npm run purge:claim-logs
+ *   npm run purge:claim-logs -- 23-08-2026
+ *   CLAIMED_DATE=23-08-2026 npm run purge:claim-logs
+ *   CLAIMED_DATE=2026-08-23 npm run purge:claim-logs   # ISO also accepted
  */
 import "@/lib/loadEnv";
 import { prisma } from "@/lib/prisma";
 import { utcClaimedDate, utcClaimedDateKey } from "@/lib/claimDate";
 
-function parseClaimedDate(): Date {
-  const raw = process.env.CLAIMED_DATE?.trim();
-  if (!raw) return utcClaimedDate();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    throw new Error(
-      `CLAIMED_DATE must be YYYY-MM-DD (UTC), got: ${JSON.stringify(raw)}`
-    );
+function parseDayArg(raw: string): Date {
+  const trimmed = raw.trim();
+  const ddMmYyyy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+  if (ddMmYyyy) {
+    const [, dd, mm, yyyy] = ddMmYyyy;
+    const day = Number(dd);
+    const month = Number(mm);
+    const year = Number(yyyy);
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      throw new Error(`Invalid date: ${JSON.stringify(trimmed)}`);
+    }
+    return new Date(Date.UTC(year, month - 1, day));
   }
-  const [y, m, d] = raw.split("-").map(Number);
-  return new Date(Date.UTC(y!, m! - 1, d!));
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (iso) {
+    const [, yyyy, mm, dd] = iso;
+    return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+  }
+  throw new Error(
+    `Date must be DD-MM-YYYY (e.g. 23-08-2026) or YYYY-MM-DD (UTC), got: ${JSON.stringify(trimmed)}`
+  );
+}
+
+function parseClaimedDate(): Date {
+  const fromArg = process.argv[2]?.trim();
+  const fromEnv = process.env.CLAIMED_DATE?.trim();
+  const raw = fromArg || fromEnv;
+  if (!raw) return utcClaimedDate();
+  return parseDayArg(raw);
 }
 
 async function main() {

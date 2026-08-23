@@ -178,8 +178,8 @@ export const copy = {
     pageSummaryGdSent: (totalGd: string) => `· ${totalGd} G$ sent`,
   },
   time: {
-    claimScheduleUtc: "daily at 3:00 PM UTC",
-    claimScheduleShort: "3:00 PM UTC daily",
+    claimScheduleUtc: "daily at 6:00 PM EAT",
+    claimScheduleShort: "6:00 PM EAT daily",
     claimScheduleYourTime: "your time",
   },
   faqs: {
@@ -207,7 +207,7 @@ export const copy = {
       {
         question: "When are GoClaims made?",
         answer:
-          "Every day at 3:00 PM UTC. G$ is sent to your wallet right after each GoClaim.",
+          "Every day at 6:00 PM EAT (East Africa Time). G$ is sent to your wallet right after each GoClaim.",
       },
       {
         question: "Where does my G$ go?",

@@ -74,7 +74,7 @@ cronSchedule = "0 15 * * *"
 
 - `buildCommand` runs `prisma generate` only — **not** `next build` (that runs on Vercel).
 - `restartPolicyType = "NEVER"` — cron runs once and exits; always-on restart policies prevent scheduling.
-- `cronSchedule = "0 15 * * *"` — daily at 15:00 UTC.
+- `cronSchedule = "0 15 * * *"` — daily at 15:00 UTC (6:00 PM EAT / UTC+3).
 - Start command enqueues via `curl`, then runs `worker/runUntilDrained.ts`. `-f` on curl exits non-zero on HTTP 4xx/5xx so a failed trigger skips the worker.
 
 ### Env vars (Railway service)
