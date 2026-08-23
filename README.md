@@ -2,7 +2,7 @@
 
 Your GoodDollar UBI, on autopilot.
 
-GoClaim automatically claims G$ daily on behalf of users who have verified and whitelisted their root wallet on Celo. Users connect via SIWE, GoClaim creates a GoClaim account (ERC-4337), links it once in GoodDollar, and a daily cron enqueues claims through BullMQ at 6:00 PM EAT (15:00 UTC). G$ is forwarded to the user's root wallet after each claim.
+GoClaim automatically claims G$ daily on behalf of users who have verified and whitelisted their root wallet on Celo. Users connect via SIWE, GoClaim creates a GoClaim account (ERC-4337), links it once in GoodDollar, and a daily cron enqueues claims through BullMQ at 3:00 PM EAT (12:00 UTC). G$ is forwarded to the user's root wallet after each claim.
 
 ## Architecture at a glance
 
@@ -23,7 +23,7 @@ flowchart TB
   end
 
   subgraph railway [Railway]
-    Cron["Cron 6PM EAT + drain worker"]
+    Cron["Cron 3PM EAT + drain worker"]
   end
 
   subgraph chain [Celo mainnet]
@@ -190,7 +190,7 @@ To test the full queue locally, enqueue via curl then run `npm run worker:drain`
 ## Deployment
 
 - **Vercel** — Next.js app (landing, dashboard, APIs).
-- **Railway** — daily `0 15 * * *` UTC (6:00 PM EAT): trigger claims + drain worker (`railway.toml`).
+- **Railway** — daily `0 12 * * *` UTC (3:00 PM EAT): trigger claims + drain worker (`railway.toml`).
 - **Neon** — Postgres.
 - **Upstash** — Redis for BullMQ only (no idle polling between daily runs).
 

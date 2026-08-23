@@ -3,7 +3,8 @@
  * Keeps the best row (success with children preferred). Deletes losers and their
  * TransferLog / GoClaimUbiClaimedLog / GoClaimTokenTransferredLog children first.
  *
- * Run BEFORE `prisma migrate deploy` for claimedDate if duplicates exist.
+ * Historical: was used BEFORE the unique-daily migration. Unique daily
+ * constraint has since been dropped (multiple ClaimLogs per day allowed).
  *
  * Usage:
  *   npm run dedupe:daily-claim-logs

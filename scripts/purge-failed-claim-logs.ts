@@ -1,7 +1,6 @@
 /**
  * Delete all ClaimLog rows with status "failed" (and child transfer/event logs).
- * Needed after a failed daily claim so the unique (userId, claimedDate) slot
- * can be reused by a successful cron run.
+ * Useful cleanup after bad claim attempts.
  *
  * Usage:
  *   npm run purge:failed-claim-logs

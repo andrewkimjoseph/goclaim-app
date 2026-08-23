@@ -15,6 +15,43 @@ function shiftLocalDateKey(dateKey: string, days: number, timeZone: string): str
 }
 
 /**
+ * Ops grace days that bridge a streak gap without a ClaimLog row.
+ * Override / extend with STREAK_BRIDGE_DATES=YYYY-MM-DD,YYYY-MM-DD
+ */
+const DEFAULT_STREAK_BRIDGE_DATE_KEYS = ["2026-08-23"];
+
+export function getStreakBridgeDateKeys(): Set<string> {
+  const keys = new Set(DEFAULT_STREAK_BRIDGE_DATE_KEYS);
+  const raw = process.env.STREAK_BRIDGE_DATES?.trim();
+  if (raw) {
+    for (const part of raw.split(",")) {
+      const key = part.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(key)) keys.add(key);
+    }
+  }
+  return keys;
+}
+
+/**
+ * Bridge day counts only when a real success exists further back
+ * (with only other bridge days in between) — avoids inflating streaks
+ * for users who never claimed before the grace day.
+ */
+function bridgeContinuesStreak(
+  cursor: string,
+  successDays: Set<string>,
+  bridgeDays: Set<string>,
+  timeZone: string
+): boolean {
+  if (!bridgeDays.has(cursor)) return false;
+  let peek = shiftLocalDateKey(cursor, -1, timeZone);
+  while (bridgeDays.has(peek) && !successDays.has(peek)) {
+    peek = shiftLocalDateKey(peek, -1, timeZone);
+  }
+  return successDays.has(peek);
+}
+
+/**
  * Consecutive local days with at least one successful GoClaim.
  *
  * Anchor (reference = today in timeZone):
@@ -22,15 +59,14 @@ function shiftLocalDateKey(dateKey: string, days: number, timeZone: string): str
  * - No claim today, claim yesterday → count from yesterday (grace before today's run)
  * - No claim yesterday → 0
  *
- * Examples (America/New_York):
- * - Success Mon–Wed, viewing Wed → 3
- * - Success Mon–Tue only, viewing Wed before cron → 2
- * - Success Mon only, viewing Wed → 0
+ * Streak bridge dates (e.g. 2026-08-23 ops miss) count when they sit between
+ * real successes so the gap does not reset the streak.
  */
 export function computeClaimStreak(
   successTimestamps: Date[],
   timeZone: string,
-  now = new Date()
+  now = new Date(),
+  bridgeDays = getStreakBridgeDateKeys()
 ): number {
   if (successTimestamps.length === 0) return 0;
 
@@ -46,15 +82,31 @@ export function computeClaimStreak(
     anchor = todayKey;
   } else if (successDays.has(yesterdayKey)) {
     anchor = yesterdayKey;
+  } else if (
+    bridgeDays.has(yesterdayKey) &&
+    bridgeContinuesStreak(yesterdayKey, successDays, bridgeDays, timeZone)
+  ) {
+    // Viewing the day after a bridge with no claim yet — still credit from yesterday bridge
+    // only if a prior success exists (handled by bridgeContinuesStreak).
+    anchor = yesterdayKey;
   } else {
     return 0;
   }
 
   let streak = 0;
   let cursor = anchor;
-  while (successDays.has(cursor)) {
-    streak++;
-    cursor = shiftLocalDateKey(cursor, -1, timeZone);
+  while (true) {
+    if (successDays.has(cursor)) {
+      streak++;
+      cursor = shiftLocalDateKey(cursor, -1, timeZone);
+      continue;
+    }
+    if (bridgeContinuesStreak(cursor, successDays, bridgeDays, timeZone)) {
+      streak++;
+      cursor = shiftLocalDateKey(cursor, -1, timeZone);
+      continue;
+    }
+    break;
   }
 
   return streak;

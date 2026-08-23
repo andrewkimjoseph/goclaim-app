@@ -1,5 +1,7 @@
 /**
- * UTC calendar date at midnight for ClaimLog uniqueness (one row per user per day).
+ * UTC calendar date at midnight for ClaimLog.claimedDate (UTC day bucket).
+ * Multiple ClaimLog rows per user per day are allowed; on-chain eligibility
+ * remains the once-per-period claim gate.
  */
 export function utcClaimedDate(from: Date = new Date()): Date {
   return new Date(

@@ -11,14 +11,7 @@ import type { ClaimJobData } from "@/lib/queue";
 
 const CLAIM_TIMEOUT_MS = 45_000;
 
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002"
-  );
-}
-
-/** Create at most one ClaimLog per user per UTC day; ignore unique races. */
-async function createDailyClaimLog(
+async function createClaimLog(
   client: Prisma.TransactionClient | typeof prisma,
   data: {
     userId: string;
@@ -28,38 +21,23 @@ async function createDailyClaimLog(
     waveIndex?: number | null;
     claimedDate: Date;
   }
-): Promise<string | null> {
-  try {
-    const row = await client.claimLog.create({
-      data: {
-        userId: data.userId,
-        status: data.status,
-        txHash: data.txHash ?? null,
-        errorMsg: data.errorMsg ?? null,
-        waveIndex: data.waveIndex ?? null,
-        claimedDate: data.claimedDate,
-      },
-    });
-    return row.id;
-  } catch (error) {
-    if (isUniqueViolation(error)) return null;
-    throw error;
-  }
+): Promise<string> {
+  const row = await client.claimLog.create({
+    data: {
+      userId: data.userId,
+      status: data.status,
+      txHash: data.txHash ?? null,
+      errorMsg: data.errorMsg ?? null,
+      waveIndex: data.waveIndex ?? null,
+      claimedDate: data.claimedDate,
+    },
+  });
+  return row.id;
 }
 
 export async function processClaim(data: ClaimJobData): Promise<void> {
   const { userId, waveIndex } = data;
   const claimedDate = utcClaimedDate();
-
-  const existingToday = await prisma.claimLog.findUnique({
-    where: {
-      userId_claimedDate: { userId, claimedDate },
-    },
-    select: { id: true },
-  });
-  if (existingToday) {
-    return;
-  }
 
   const goClaimWallet = await prisma.goClaimWallet.findUnique({
     where: { userId },
@@ -67,7 +45,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
   });
 
   if (!goClaimWallet || !goClaimWallet.isActive) {
-    await createDailyClaimLog(prisma, {
+    await createClaimLog(prisma, {
       userId,
       status: "skipped",
       errorMsg: "No active GoClaim account",
@@ -92,7 +70,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
     const eligibility = await checkUbiClaimEligibility(privateKeyHex);
 
     if (eligibility.status === "already_claimed") {
-      await createDailyClaimLog(prisma, {
+      await createClaimLog(prisma, {
         userId,
         status: "skipped",
         errorMsg: "already_claimed",
@@ -103,7 +81,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
     }
 
     if (eligibility.status === "not_whitelisted") {
-      await createDailyClaimLog(prisma, {
+      await createClaimLog(prisma, {
         userId,
         status: "skipped",
         errorMsg: "not_whitelisted",
@@ -114,7 +92,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
     }
 
     if (eligibility.status === "no_entitlement") {
-      await createDailyClaimLog(prisma, {
+      await createClaimLog(prisma, {
         userId,
         status: "skipped",
         errorMsg: "no_entitlement",
@@ -130,7 +108,7 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
     );
 
     if (!result.claimed) {
-      await createDailyClaimLog(prisma, {
+      await createClaimLog(prisma, {
         userId,
         status: "skipped",
         errorMsg: result.reason,
@@ -141,16 +119,13 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
     }
 
     await prisma.$transaction(async (tx) => {
-      const claimLogId = await createDailyClaimLog(tx, {
+      const claimLogId = await createClaimLog(tx, {
         userId,
         status: "success",
         txHash: result.userOpHash,
         waveIndex,
         claimedDate,
       });
-      if (!claimLogId) {
-        return;
-      }
 
       await tx.transferLog.create({
         data: {
@@ -182,12 +157,9 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
       });
     });
   } catch (error) {
-    if (isUniqueViolation(error)) {
-      return;
-    }
     const errorMsg =
       error instanceof Error ? error.message : "Unknown claim error";
-    await createDailyClaimLog(prisma, {
+    await createClaimLog(prisma, {
       userId,
       status: "failed",
       errorMsg,

@@ -1,6 +1,6 @@
 /**
- * Delete ClaimLog rows for a UTC claimedDate (and child transfer/event logs)
- * so the unique (userId, claimedDate) slot can be reused by another cron.
+ * Delete ClaimLog rows for a UTC claimedDate (and child transfer/event logs).
+ * Useful for cleanup after bad runs; multiple rows per user per day are allowed.
  *
  * Also clears GoClaimWallet.lastClaimedAt when it falls on that same UTC day.
  *

@@ -49,7 +49,6 @@ model ClaimLog {
   goClaimUbiClaimedLog      GoClaimUbiClaimedLog?
   goClaimTokenTransferredLog GoClaimTokenTransferredLog?
 
-  @@unique([userId, claimedDate])
   @@index([userId, claimedDate])
 }
 
