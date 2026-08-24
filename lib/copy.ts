@@ -178,8 +178,8 @@ export const copy = {
     pageSummaryGdSent: (totalGd: string) => `· ${totalGd} G$ sent`,
   },
   time: {
-    claimScheduleUtc: "daily at 3:00 PM EAT",
-    claimScheduleShort: "3:00 PM EAT daily",
+    claimScheduleUtc: "daily at 15.00 UTC",
+    claimScheduleShort: "15.00 UTC daily",
     claimScheduleYourTime: "your time",
   },
   faqs: {
@@ -207,7 +207,7 @@ export const copy = {
       {
         question: "When are GoClaims made?",
         answer:
-          "Every day at 3:00 PM EAT (East Africa Time). G$ is sent to your wallet right after each GoClaim.",
+          "Every day at 15:00 UTC. G$ is sent to your wallet right after each GoClaim.",
       },
       {
         question: "Where does my G$ go?",
@@ -271,21 +271,21 @@ export function formatClaimSchedule(): string {
 
   try {
     const now = new Date();
-    const utcNoon = new Date(
+    const utcClaimTime = new Date(
       Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),
         now.getUTCDate(),
-        12,
+        15,
         0,
         0
       )
     );
-    const local = utcNoon.toLocaleTimeString(undefined, {
+    const local = utcClaimTime.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
     });
-    if (utcNoon.getTimezoneOffset() === 0) return base;
+    if (utcClaimTime.getTimezoneOffset() === 0) return base;
 
     return `${base} (${local} ${copy.time.claimScheduleYourTime})`;
   } catch {
