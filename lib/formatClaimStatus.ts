@@ -5,7 +5,6 @@ export type ClaimDisplayStatus = {
 
 const SKIP_REASONS: Record<string, string> = {
   already_claimed: "Already claimed",
-  scheme_paused: "UBI paused",
   not_whitelisted: "Not verified on GoodDollar",
   no_entitlement: "No GoClaim available yet",
   "No active GoClaim account": "GoClaim account not active",
@@ -29,6 +28,9 @@ export function formatClaimStatus(
   }
 
   if (status === "skipped") {
+    if (errorMsg === "scheme_paused") {
+      return { label: "Paused" };
+    }
     const reason = errorMsg ?? "";
     return {
       label: "Skipped",
