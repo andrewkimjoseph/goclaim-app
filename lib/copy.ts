@@ -119,7 +119,7 @@ export const copy = {
     streakDays: (n: number) => (n === 1 ? "1 day" : `${n} days`),
     streakEmpty: "Your streak starts once your first GoClaim goes through.",
     streakDescription:
-      "GoClaim runs automatically every day and claims your G$ for you. Your streak counts the consecutive days a GoClaim succeeds. If a day's GoClaim fails, the streak resets to zero.",
+      "Your streak is consecutive successful GoClaims. A UBI pause doesn't reset it. A failed day does.",
     streakClose: "Got it",
     totalGoClaims: "Total GoClaims",
     totalGGoClaimed: "Total G$ GoClaimed",

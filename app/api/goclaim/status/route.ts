@@ -10,7 +10,7 @@ import { formatEntitlementGd, formatGdAmountWhole } from "@/lib/onchain/claimUbi
 import { formatUsdmDisplay } from "@/lib/onchain/formatUsdm";
 import { getRootGdBalance, type RootGdBalance } from "@/lib/onchain/getRootGdBalance";
 import { quoteGdWeiToUsdm } from "@/lib/onchain/quoteGdToUsdm";
-import { computeClaimStreak, parseTimezoneParam } from "@/lib/computeClaimStreak";
+import { computeClaimStreak, parseTimezoneParam, toLocalDateKey } from "@/lib/computeClaimStreak";
 
 type TransferLogRow = {
   recipientAddress: string;
@@ -111,11 +111,20 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const [rootBalanceResult, resolved, successfulClaims, transfers] = await Promise.all([
+  const [rootBalanceResult, resolved, successfulClaims, pausedSkips, transfers] =
+    await Promise.all([
     getRootGdBalance(user.rootAddress as Address).catch(() => null),
     resolveGoClaimAccount(session.userId),
     prisma.claimLog.findMany({
       where: { userId: user.id, status: "success" },
+      select: { claimedAt: true },
+    }),
+    prisma.claimLog.findMany({
+      where: {
+        userId: user.id,
+        status: "skipped",
+        errorMsg: "scheme_paused",
+      },
       select: { claimedAt: true },
     }),
     prisma.transferLog.findMany({
@@ -137,9 +146,19 @@ export async function GET(request: NextRequest) {
   ]);
   const isDeployed = Boolean(accountBytecode && accountBytecode !== "0x");
 
+  const pauseDays = new Set(
+    pausedSkips.map((row) => toLocalDateKey(row.claimedAt, timeZone))
+  );
+  if (ubiScheme.paused) {
+    pauseDays.add(toLocalDateKey(new Date(), timeZone));
+  }
+
   const claimStreak = computeClaimStreak(
     successfulClaims.map((c) => c.claimedAt),
     timeZone,
+    new Date(),
+    undefined,
+    pauseDays
   );
 
   const totalWei = transfers.reduce(

@@ -54,19 +54,24 @@ function bridgeContinuesStreak(
 /**
  * Consecutive local days with at least one successful GoClaim.
  *
- * Anchor (reference = today in timeZone):
- * - Claim today → count backward from today
- * - No claim today, claim yesterday → count from yesterday (grace before today's run)
- * - No claim yesterday → 0
+ * Anchor (walk back from today in timeZone):
+ * - Success → start counting there
+ * - UBI pause day → skip (does not consume the one-day grace)
+ * - Streak-bridge day (e.g. 2026-08-23) → start there if a real success exists further back
+ * - One non-success, non-pause day → grace (today's cron not run yet)
+ * - Second real gap → 0
  *
- * Streak bridge dates (e.g. 2026-08-23 ops miss) count when they sit between
- * real successes so the gap does not reset the streak.
+ * Counting from the anchor backward:
+ * - Success → increment
+ * - Pause → continue, do not increment
+ * - Bridge day → increment when it sits between real successes
  */
 export function computeClaimStreak(
   successTimestamps: Date[],
   timeZone: string,
   now = new Date(),
-  bridgeDays = getStreakBridgeDateKeys()
+  bridgeDays = getStreakBridgeDateKeys(),
+  pauseDays: ReadonlySet<string> = new Set()
 ): number {
   if (successTimestamps.length === 0) return 0;
 
@@ -75,29 +80,43 @@ export function computeClaimStreak(
   );
 
   const todayKey = toLocalDateKey(now, timeZone);
-  const yesterdayKey = shiftLocalDateKey(todayKey, -1, timeZone);
 
+  let cursor = todayKey;
+  let graceUsed = false;
   let anchor: string | null = null;
-  if (successDays.has(todayKey)) {
-    anchor = todayKey;
-  } else if (successDays.has(yesterdayKey)) {
-    anchor = yesterdayKey;
-  } else if (
-    bridgeDays.has(yesterdayKey) &&
-    bridgeContinuesStreak(yesterdayKey, successDays, bridgeDays, timeZone)
-  ) {
-    // Viewing the day after a bridge with no claim yet — still credit from yesterday bridge
-    // only if a prior success exists (handled by bridgeContinuesStreak).
-    anchor = yesterdayKey;
-  } else {
+
+  while (anchor === null) {
+    if (successDays.has(cursor)) {
+      anchor = cursor;
+      break;
+    }
+    if (pauseDays.has(cursor)) {
+      cursor = shiftLocalDateKey(cursor, -1, timeZone);
+      continue;
+    }
+    if (bridgeContinuesStreak(cursor, successDays, bridgeDays, timeZone)) {
+      anchor = cursor;
+      break;
+    }
+    if (!graceUsed) {
+      graceUsed = true;
+      cursor = shiftLocalDateKey(cursor, -1, timeZone);
+      continue;
+    }
     return 0;
   }
 
+  if (!anchor) return 0;
+
   let streak = 0;
-  let cursor = anchor;
+  cursor = anchor;
   while (true) {
     if (successDays.has(cursor)) {
       streak++;
+      cursor = shiftLocalDateKey(cursor, -1, timeZone);
+      continue;
+    }
+    if (pauseDays.has(cursor)) {
       cursor = shiftLocalDateKey(cursor, -1, timeZone);
       continue;
     }

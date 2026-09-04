@@ -57,4 +57,75 @@ const bridge = new Set(["2026-08-23"]);
 }
 
 console.log(`sample local key: ${toLocalDateKey(new Date("2026-08-23T12:00:00Z"), tz)}`);
+
+const emptyBridge = new Set<string>();
+
+// Last success yesterday, pause today → same streak (2)
+{
+  const now = new Date("2026-09-04T15:00:00.000Z");
+  const successes = [
+    new Date("2026-09-02T15:00:00.000Z"),
+    new Date("2026-09-03T15:00:00.000Z"),
+  ];
+  const pause = new Set(["2026-09-04"]);
+  assertEqual(
+    computeClaimStreak(successes, tz, now, emptyBridge, pause),
+    2,
+    "pause today keeps yesterday's streak"
+  );
+}
+
+// Multi-day pause, still paused → same streak
+{
+  const now = new Date("2026-09-05T15:00:00.000Z");
+  const successes = [
+    new Date("2026-09-02T15:00:00.000Z"),
+    new Date("2026-09-03T15:00:00.000Z"),
+  ];
+  const pause = new Set(["2026-09-04", "2026-09-05"]);
+  assertEqual(
+    computeClaimStreak(successes, tz, now, emptyBridge, pause),
+    2,
+    "multi-day pause keeps last success streak"
+  );
+}
+
+// Multi-day pause then success → previous streak + 1
+{
+  const now = new Date("2026-09-06T15:00:00.000Z");
+  const successes = [
+    new Date("2026-09-02T15:00:00.000Z"),
+    new Date("2026-09-03T15:00:00.000Z"),
+    new Date("2026-09-06T15:00:00.000Z"),
+  ];
+  const pause = new Set(["2026-09-04", "2026-09-05"]);
+  assertEqual(
+    computeClaimStreak(successes, tz, now, emptyBridge, pause),
+    3,
+    "success after pause is last streak + 1"
+  );
+}
+
+// Missed day with no pause → 0
+{
+  const now = new Date("2026-09-05T15:00:00.000Z");
+  const successes = [new Date("2026-09-03T15:00:00.000Z")];
+  assertEqual(
+    computeClaimStreak(successes, tz, now, emptyBridge),
+    0,
+    "missed day without pause resets streak"
+  );
+}
+
+// Pause with no successes ever → 0
+{
+  const now = new Date("2026-09-04T15:00:00.000Z");
+  const pause = new Set(["2026-09-04"]);
+  assertEqual(
+    computeClaimStreak([], tz, now, emptyBridge, pause),
+    0,
+    "pause does not create a streak without successes"
+  );
+}
+
 console.log("all streak selftests passed");
