@@ -17,6 +17,7 @@ export type GoClaimStatus = {
   lastClaimedAt?: string | null;
   linkStatus?: "active" | "pending" | "linked_other";
   linkComplete?: boolean;
+  ubiSchemePaused?: boolean;
   lifetimeClaims?: number;
   lifetimeGdClaimed?: string;
   lifetimeGdClaimedUsdm?: string | null;

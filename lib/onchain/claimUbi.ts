@@ -44,6 +44,10 @@ export async function claimUbi(
 ): Promise<ClaimUbiResult> {
   const eligibility = await checkUbiClaimEligibility(privateKeyHex);
 
+  if (eligibility.status === "scheme_paused") {
+    throw new Error("Cannot claim GoodDollar UBI: scheme paused.");
+  }
+
   if (eligibility.status === "already_claimed") {
     return {
       claimed: false,

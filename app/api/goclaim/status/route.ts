@@ -3,7 +3,7 @@ import { type Address } from "viem";
 import { isAccountCreationEnabled } from "@/lib/accountCreation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getLinkStatus } from "@/lib/onchain/eligibility";
+import { getLinkStatus, getUbiSchemePauseState } from "@/lib/onchain/eligibility";
 import { resolveGoClaimAccount } from "@/lib/onchain/resolveGoClaimAccount";
 import { publicClient } from "@/lib/onchain/config";
 import { formatEntitlementGd, formatGdAmountWhole } from "@/lib/onchain/claimUbi";
@@ -130,9 +130,10 @@ export async function GET(request: NextRequest) {
 
   const goClaimAccountAddress = resolved.goClaimAccountAddress;
 
-  const [link, accountBytecode] = await Promise.all([
+  const [link, accountBytecode, ubiScheme] = await Promise.all([
     getLinkStatus(goClaimAccountAddress, user.rootAddress as Address),
     publicClient.getCode({ address: goClaimAccountAddress }),
+    getUbiSchemePauseState(),
   ]);
   const isDeployed = Boolean(accountBytecode && accountBytecode !== "0x");
 
@@ -168,6 +169,7 @@ export async function GET(request: NextRequest) {
         ? "linked_other"
         : "pending",
     linkComplete: link.linkComplete,
+    ubiSchemePaused: ubiScheme.paused,
     whitelistedRoot: link.whitelistedRoot,
     lifetimeClaims: successfulClaims.length,
     lifetimeGdClaimed: formatGdAmountWhole(totalWei.toString()),

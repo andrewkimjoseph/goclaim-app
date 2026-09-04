@@ -5,17 +5,79 @@ import { IDENTITY_PROXY_ADDRESS, UBI_SCHEME_PROXY_ADDRESS } from "./constants";
 import { publicClient } from "./config";
 import { deriveGoClaimAccount } from "./deriveGoClaimAccount";
 
+const SECONDS_PER_DAY = BigInt(86_400);
+
 type EligibilityBase = {
   eoaAddress: Hex;
   goClaimAccountAddress: Hex;
   whitelistedRoot: Hex;
 };
 
+export type UbiSchemePauseState = {
+  paused: boolean;
+  currentDay: bigint;
+  periodStart: bigint;
+  dayRolled: boolean;
+};
+
 export type UbiClaimEligibility =
+  | (EligibilityBase & { status: "scheme_paused"; entitlement: "0" })
   | (EligibilityBase & { status: "already_claimed"; entitlement: "0" })
   | (EligibilityBase & { status: "eligible"; entitlement: bigint })
   | (EligibilityBase & { status: "not_whitelisted"; entitlement: "0" })
   | (EligibilityBase & { status: "no_entitlement"; entitlement: "0" });
+
+export function ubiSchemeDayRolled(
+  currentDay: bigint,
+  periodStart: bigint,
+  nowSec = BigInt(Math.floor(Date.now() / 1000))
+): boolean {
+  const today = (nowSec - periodStart) / SECONDS_PER_DAY;
+  return currentDay === today;
+}
+
+export async function getUbiSchemePauseState(): Promise<UbiSchemePauseState> {
+  const [pausedResult, currentDayResult, periodStartResult] =
+    await publicClient.multicall({
+      contracts: [
+        {
+          address: UBI_SCHEME_PROXY_ADDRESS,
+          abi: ubiSchemeAbi,
+          functionName: "paused",
+        },
+        {
+          address: UBI_SCHEME_PROXY_ADDRESS,
+          abi: ubiSchemeAbi,
+          functionName: "currentDay",
+        },
+        {
+          address: UBI_SCHEME_PROXY_ADDRESS,
+          abi: ubiSchemeAbi,
+          functionName: "periodStart",
+        },
+      ],
+    });
+
+  if (pausedResult.status !== "success") {
+    throw new Error("Failed to read paused from UBI scheme");
+  }
+  if (currentDayResult.status !== "success") {
+    throw new Error("Failed to read currentDay from UBI scheme");
+  }
+  if (periodStartResult.status !== "success") {
+    throw new Error("Failed to read periodStart from UBI scheme");
+  }
+
+  const currentDay = currentDayResult.result;
+  const periodStart = periodStartResult.result;
+
+  return {
+    paused: pausedResult.result,
+    currentDay,
+    periodStart,
+    dayRolled: ubiSchemeDayRolled(currentDay, periodStart),
+  };
+}
 
 export async function checkUbiClaimEligibility(
   privateKeyHex: Hex
@@ -40,8 +102,29 @@ export async function checkUbiClaimEligibility(
     return { ...base, status: "not_whitelisted", entitlement: "0" };
   }
 
-  const [hasClaimedResult, entitlementResult] = await publicClient.multicall({
+  const [
+    pausedResult,
+    currentDayResult,
+    periodStartResult,
+    hasClaimedResult,
+    entitlementResult,
+  ] = await publicClient.multicall({
     contracts: [
+      {
+        address: UBI_SCHEME_PROXY_ADDRESS,
+        abi: ubiSchemeAbi,
+        functionName: "paused",
+      },
+      {
+        address: UBI_SCHEME_PROXY_ADDRESS,
+        abi: ubiSchemeAbi,
+        functionName: "currentDay",
+      },
+      {
+        address: UBI_SCHEME_PROXY_ADDRESS,
+        abi: ubiSchemeAbi,
+        functionName: "periodStart",
+      },
       {
         address: UBI_SCHEME_PROXY_ADDRESS,
         abi: ubiSchemeAbi,
@@ -57,11 +140,28 @@ export async function checkUbiClaimEligibility(
     ],
   });
 
+  if (pausedResult.status !== "success") {
+    throw new Error("Failed to read paused from UBI scheme");
+  }
+  if (pausedResult.result) {
+    return { ...base, status: "scheme_paused", entitlement: "0" };
+  }
+
   if (hasClaimedResult.status !== "success") {
     throw new Error("Failed to read hasClaimed from UBI scheme");
   }
+  if (currentDayResult.status !== "success") {
+    throw new Error("Failed to read currentDay from UBI scheme");
+  }
+  if (periodStartResult.status !== "success") {
+    throw new Error("Failed to read periodStart from UBI scheme");
+  }
 
-  if (hasClaimedResult.result) {
+  const dayRolled = ubiSchemeDayRolled(
+    currentDayResult.result,
+    periodStartResult.result
+  );
+  if (dayRolled && hasClaimedResult.result) {
     return { ...base, status: "already_claimed", entitlement: "0" };
   }
 

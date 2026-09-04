@@ -69,6 +69,17 @@ export async function processClaim(data: ClaimJobData): Promise<void> {
   try {
     const eligibility = await checkUbiClaimEligibility(privateKeyHex);
 
+    if (eligibility.status === "scheme_paused") {
+      await createClaimLog(prisma, {
+        userId,
+        status: "skipped",
+        errorMsg: "scheme_paused",
+        waveIndex,
+        claimedDate,
+      });
+      return;
+    }
+
     if (eligibility.status === "already_claimed") {
       await createClaimLog(prisma, {
         userId,

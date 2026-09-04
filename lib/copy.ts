@@ -89,6 +89,8 @@ export const copy = {
     headlineSetup: "Welcome back",
     subheadActive: (claimSchedule: string) =>
       `GoClaims run ${claimSchedule}.`,
+    subheadUbiPaused:
+      "GoodDollar UBI is paused. Today's GoClaim was skipped — you'll receive G$ when claiming resumes.",
     subheadSetup: "Link to GoodDollar to start GoClaiming.",
     loading: "Loading...",
     setupGoClaim: "Set up GoClaim account",

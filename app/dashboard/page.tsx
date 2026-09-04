@@ -219,7 +219,9 @@ export default function DashboardPage() {
               </p>
               <p className="text-sm text-white/80">
                 {linkComplete
-                  ? copy.dashboard.subheadActive(claimSchedule)
+                  ? status.ubiSchemePaused
+                    ? copy.dashboard.subheadUbiPaused
+                    : copy.dashboard.subheadActive(claimSchedule)
                   : copy.dashboard.subheadSetup}
               </p>
             </div>
