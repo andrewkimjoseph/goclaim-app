@@ -11,6 +11,7 @@ import {
 } from "@/lib/onchain/browserWallet";
 import { friendlyConnectError } from "@/lib/friendlyTxError";
 import { copy } from "@/lib/copy";
+import { reportCelinaOnchainTxn } from "@andrewkimjoseph/celina-sdk/onchain-stats";
 
 type ConnectGoClaimButtonProps = {
   goClaimAccountAddress: Address;
@@ -102,7 +103,12 @@ export function ConnectGoClaimButton({
       setIsConfirming(true);
 
       try {
-        await browserPublicClient.waitForTransactionReceipt({ hash });
+        const receipt = await browserPublicClient.waitForTransactionReceipt({
+          hash,
+        });
+        if (receipt.status === "success") {
+          reportCelinaOnchainTxn(hash);
+        }
       } catch (err) {
         if (!isTransactionNotFoundError(err)) {
           throw err;
