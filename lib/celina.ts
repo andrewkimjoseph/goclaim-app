@@ -4,6 +4,5 @@ import { rpcUrl } from "@/lib/onchain/config";
 export const celina = createCelinaClient({
   rpcUrl,
   attributionTags: ["goclaim"],
-  analyticsEnabled: true,
   analyticsDeviceId: "goclaim_app",
 });
