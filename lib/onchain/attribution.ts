@@ -1,4 +1,4 @@
-import { stripErc8021SuffixIfPresent } from "@andrewkimjoseph/celina-sdk";
+import { stripErc8021SuffixIfPresent } from "@cnvlabskoxyz/celina-sdk";
 import type { Hex } from "viem";
 
 /**

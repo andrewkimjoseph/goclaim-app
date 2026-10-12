@@ -1,5 +1,5 @@
 import { type Hex } from "viem";
-import { deriveSmartAccountAddress } from "@andrewkimjoseph/celina-sdk/aa";
+import { deriveSmartAccountAddress } from "@cnvlabskoxyz/celina-sdk/aa";
 import { publicClient } from "./config";
 
 export type DerivedGoClaimAccount = {
