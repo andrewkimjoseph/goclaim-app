@@ -11,7 +11,7 @@ import {
 } from "@/lib/onchain/browserWallet";
 import { friendlyConnectError } from "@/lib/friendlyTxError";
 import { copy } from "@/lib/copy";
-import { reportCelinaOnchainTxn } from "@andrewkimjoseph/celina-sdk/onchain-stats";
+import { reportCelinaOnchainTxn } from "@cnvlabskoxyz/celina-sdk/onchain-stats";
 
 type ConnectGoClaimButtonProps = {
   goClaimAccountAddress: Address;

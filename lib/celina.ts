@@ -1,4 +1,4 @@
-import { createCelinaClient } from "@andrewkimjoseph/celina-sdk";
+import { createCelinaClient } from "@cnvlabskoxyz/celina-sdk";
 import { rpcUrl } from "@/lib/onchain/config";
 
 export const celina = createCelinaClient({
