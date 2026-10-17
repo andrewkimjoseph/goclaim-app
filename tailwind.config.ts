@@ -21,6 +21,7 @@ const config: Config = {
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
         sans: ["var(--font-sans)", "sans-serif"],
+        mono: ["var(--font-sans)", "sans-serif"],
       },
       boxShadow: {
         brutal: "4px 4px 0 0 #000000",
