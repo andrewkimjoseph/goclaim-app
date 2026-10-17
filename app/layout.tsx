@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Sen } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/app/providers";
 
@@ -9,7 +9,7 @@ const display = Bricolage_Grotesque({
   variable: "--font-display",
 });
 
-const sans = Hanken_Grotesk({
+const sans = Sen({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sans",
