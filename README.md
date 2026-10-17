@@ -196,6 +196,10 @@ To test the full queue locally, enqueue via curl then run `npm run worker:drain`
 
 Full env var lists, smoke tests, and operational checklists are in [DEPLOY.md](./DEPLOY.md).
 
+## License
+
+MIT — Copyright (c) 2026 CNV Labs KO XYZ.
+
 ## Key rotation
 
 ```bash
