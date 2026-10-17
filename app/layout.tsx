@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Sen, Syne } from "next/font/google";
+import { Sen, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/app/providers";
 
-const display = Syne({
+const display = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-display",
 });
 
