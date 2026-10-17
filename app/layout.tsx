@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Sen } from "next/font/google";
+import { Sen, Syne } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/app/providers";
 
-const display = Bricolage_Grotesque({
+const display = Syne({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
