@@ -250,6 +250,7 @@ export default function DashboardPage() {
                 <DashboardOverviewCard
                   lifetimeGdClaimed={status.lifetimeGdClaimed ?? "0"}
                   lifetimeGdClaimedUsdm={status.lifetimeGdClaimedUsdm}
+                  lifetimeClaims={status.lifetimeClaims ?? 0}
                   rootGdBalance={status.rootGdBalance ?? null}
                   rootGdBalanceUsdm={status.rootGdBalanceUsdm}
                   lastClaimedAt={status.lastClaimedAt}

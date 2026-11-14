@@ -6,6 +6,7 @@ import { copy } from "@/lib/copy";
 type DashboardOverviewCardProps = {
   lifetimeGdClaimed: string;
   lifetimeGdClaimedUsdm?: string | null;
+  lifetimeClaims: number;
   rootGdBalance: string | null;
   rootGdBalanceUsdm?: string | null;
   lastClaimedAt?: string | null;
@@ -42,6 +43,7 @@ const currencyFigureClass =
 export function DashboardOverviewCard({
   lifetimeGdClaimed,
   lifetimeGdClaimedUsdm,
+  lifetimeClaims,
   rootGdBalance,
   rootGdBalanceUsdm,
   lastClaimedAt,
@@ -50,20 +52,32 @@ export function DashboardOverviewCard({
 }: DashboardOverviewCardProps) {
   return (
     <div className="card">
-      <p className="text-xs font-display font-semibold text-shell">
-        {copy.dashboard.rootGdBalance}
-      </p>
-      <p className={`mt-2 truncate ${currencyFigureClass}`}>
-        {rootGdBalance != null ? (
-          <GdFigure
-            gdAmount={rootGdBalance}
-            usdmAmount={rootGdBalanceUsdm}
-            className={currencyFigureClass}
-          />
-        ) : (
-          "—"
-        )}
-      </p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-display font-semibold text-shell">
+            {copy.dashboard.rootGdBalance}
+          </p>
+          <p className={`mt-2 truncate ${currencyFigureClass}`}>
+            {rootGdBalance != null ? (
+              <GdFigure
+                gdAmount={rootGdBalance}
+                usdmAmount={rootGdBalanceUsdm}
+                className={currencyFigureClass}
+              />
+            ) : (
+              "—"
+            )}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs font-display font-semibold text-shell">
+            {copy.dashboard.totalGoClaims}
+          </p>
+          <p className="font-display font-extrabold text-xl sm:text-2xl text-primary mt-2 tabular-nums">
+            {lifetimeClaims}
+          </p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t-2 border-black">
         <div>
